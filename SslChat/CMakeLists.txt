@@ -5,5 +5,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 project(SslChat VERSION 1.0)
 
+add_subdirectory(Logging)
 add_subdirectory(Client)
 add_subdirectory(Server)

@@ -1,10 +1,8 @@
 add_executable(Server server_main.cpp)
 
-target_link_libraries(Server)
+target_link_libraries(Server Logging)
 
-target_include_directories(Server PUBLIC
-                           "${PROJECT_BINARY_DIR}"
-                           )
+target_include_directories(Server PUBLIC "${PROJECT_BINARY_DIR}" "${PROJECT_SOURCE_DIR}/Logging")
 
 # needs to be ... not at the top
 find_package(OpenSSL REQUIRED)

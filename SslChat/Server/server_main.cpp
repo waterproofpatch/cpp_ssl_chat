@@ -10,6 +10,8 @@
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 
+#include "logging.hpp"
+
 int create_socket(int port)
 {
     int                s;
@@ -75,11 +77,6 @@ void configure_context(SSL_CTX *ctx)
     }
 }
 
-void print_usage(void)
-{
-    std::cout << "Usage: " << std::endl;
-    std::cout << "./Server <path-to-cert.pem> " << std::endl;
-}
 int main(int argc, char **argv)
 {
     int      sock;
