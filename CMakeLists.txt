@@ -24,6 +24,7 @@ target_include_directories(Client PUBLIC
 find_package(OpenSSL REQUIRED)
 if (OPENSSL_FOUND)
   # Add the include directories for compiling
+  message("OpenSSL include dir: ${OPENSSL_INCLUDE_DIR} for project ${PROJECT_NAME}")
   target_include_directories(${PROJECT_NAME} PUBLIC ${OPENSSL_INCLUDE_DIR})
 
   # Add the static lib for linking
