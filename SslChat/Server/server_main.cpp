@@ -1,10 +1,14 @@
-#include <arpa/inet.h>
-#include <openssl/err.h>
-#include <openssl/ssl.h>
+#include <iostream>
+
 #include <stdio.h>
 #include <string.h>
+
+#include <arpa/inet.h>
 #include <sys/socket.h>
 #include <unistd.h>
+
+#include <openssl/err.h>
+#include <openssl/ssl.h>
 
 int create_socket(int port)
 {
@@ -71,10 +75,21 @@ void configure_context(SSL_CTX *ctx)
     }
 }
 
+void print_usage(void)
+{
+    std::cout << "Usage: " << std::endl;
+    std::cout << "./Server <path-to-cert.pem> " << std::endl;
+}
 int main(int argc, char **argv)
 {
     int      sock;
     SSL_CTX *ctx;
+
+    if (argc < 2)
+    {
+        print_usage();
+        return 1;
+    }
 
     ctx = create_context();
 
