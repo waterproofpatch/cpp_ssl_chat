@@ -6,6 +6,10 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <fmt/core.h>
+
+#include "logging.hpp"
+
 // Not sure what headers are needed or not
 // This code (theoretically) writes "Hello World, 123" to a socket over a secure
 // TLS connection compiled with g++ -Wall -o client.out client.cpp -L/usr/lib
@@ -35,7 +39,7 @@ int OpenConnection(const char *hostname, const char *port)
     struct hostent *host;
     if ((host = gethostbyname(hostname)) == nullptr)
     {
-        perror(hostname);
+        LOG_ERROR(hostname);
         exit(EXIT_FAILURE);
     }
 
@@ -47,7 +51,7 @@ int OpenConnection(const char *hostname, const char *port)
     const int status = getaddrinfo(hostname, port, &hints, &addrs);
     if (status != 0)
     {
-        fprintf(stderr, "%s: %s\n", hostname, gai_strerror(status));
+        LOG_ERROR(fmt::format("{}: {}", hostname, gai_strerror(status)));
         exit(EXIT_FAILURE);
     }
 
@@ -75,7 +79,7 @@ int OpenConnection(const char *hostname, const char *port)
 
     if (sfd == ERROR_STATUS)
     {
-        fprintf(stderr, "%s: %s\n", hostname, strerror(err));
+        LOG_ERROR(fmt::format("{}: {}", hostname, strerror(err)));
         exit(EXIT_FAILURE);
     }
     return sfd;
@@ -108,12 +112,12 @@ int main(int argc, char const *argv[])
     SSL     *ssl = SSL_new(ctx);
     if (ssl == nullptr)
     {
-        fprintf(stderr, "SSL_new() failed\n");
+        LOG_ERROR("SSL_new() failed");
         exit(EXIT_FAILURE);
     }
 
     // Host is hardcoded to localhost for testing purposes
-    const int sfd = OpenConnection("127.0.0.1", argv[1]);
+    const int sfd = OpenConnection("127.1.0.1", argv[1]);
     SSL_set_fd(ssl, sfd);
 
     const int status = SSL_connect(ssl);
@@ -122,8 +126,8 @@ int main(int argc, char const *argv[])
         SSL_get_error(ssl, status);
         ERR_print_errors_fp(stderr);   // High probability this doesn't do
                                        // anything
-        fprintf(
-            stderr, "SSL_connect failed with SSL_get_error code %d\n", status);
+        LOG_ERROR(fmt::format("SSL_connect failed with SSL_get_error code {:d}",
+                              status));
         exit(EXIT_FAILURE);
     }
 

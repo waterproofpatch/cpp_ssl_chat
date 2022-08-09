@@ -1,10 +1,16 @@
 add_executable(Client client_main.cpp)
 
+# https://hackingcpp.com/cpp/libs/fmt.html
+find_package(fmt)
+
 target_link_libraries(Client)
+target_link_libraries(Client fmt::fmt)
+target_link_libraries(Client Logging)
 
 target_include_directories(Client PUBLIC
                            "${PROJECT_BINARY_DIR}"
                            )
+target_include_directories(Client PUBLIC "${PROJECT_BINARY_DIR}" "${PROJECT_SOURCE_DIR}/Logging")
 
 # needs to be ... not at the top
 find_package(OpenSSL REQUIRED)
