@@ -76,14 +76,14 @@ void configure_context(SSL_CTX *ctx, const char *certPath, const char *keyPath)
     SSL_CTX_set_default_passwd_cb(ctx, ssl_set_password_callback);
 
     /* Set the key and cert */
-    log(LOG_INFO, fmt::format("Loading {}!", certPath));
+    logInfo(fmt::format("Loading {}!", certPath));
     if (SSL_CTX_use_certificate_file(ctx, certPath, SSL_FILETYPE_PEM) <= 0)
     {
         ERR_print_errors_fp(stderr);
         exit(EXIT_FAILURE);
     }
 
-    log(LOG_INFO, fmt::format("Loading {}!", keyPath));
+    logInfo(fmt::format("Loading {}!", keyPath));
     if (SSL_CTX_use_PrivateKey_file(ctx, keyPath, SSL_FILETYPE_PEM) <= 0)
     {
         std::cout << "Some sort of problem..." << std::endl;
@@ -119,7 +119,7 @@ int main(int argc, char **argv)
         SSL               *ssl;
         const char         reply[] = "test\n";
 
-        log(LOG_INFO, "Waiting for client...");
+        logInfo("Waiting for client...");
         int client = accept(sock, (struct sockaddr *)&addr, &len);
         if (client < 0)
         {

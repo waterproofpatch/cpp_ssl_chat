@@ -13,5 +13,10 @@ typedef enum LogLevel
 } eLogLevel;
 
 void print_usage(void);
-void log(eLogLevel level, std::string message);
+
+void logInfo(std::string message);
+void logWarn(std::string message);
+void logError(std::string message);
+void logDebug(std::string message);
+
 #endif
