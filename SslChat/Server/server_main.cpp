@@ -109,7 +109,7 @@ int main(int argc, char **argv)
 
     configure_context(ctx, argv[1], argv[2]);
 
-    sock = create_socket(4433);
+    sock = create_socket(5000);
 
     LOG_INFO("Entering loop...");
     /* Handle connections */
