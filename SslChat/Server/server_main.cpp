@@ -26,19 +26,19 @@ int create_socket(int port)
     s = socket(AF_INET, SOCK_STREAM, 0);
     if (s < 0)
     {
-        perror("Unable to create socket");
+        LOG_ERROR("Unable to create socket");
         exit(EXIT_FAILURE);
     }
 
     if (bind(s, (struct sockaddr *)&addr, sizeof(addr)) < 0)
     {
-        perror("Unable to bind");
+        LOG_ERROR("Unable to bind");
         exit(EXIT_FAILURE);
     }
 
     if (listen(s, 1) < 0)
     {
-        perror("Unable to listen");
+        LOG_ERROR("Unable to listen");
         exit(EXIT_FAILURE);
     }
 
@@ -55,7 +55,7 @@ SSL_CTX *create_context()
     ctx = SSL_CTX_new(method);
     if (!ctx)
     {
-        perror("Unable to create SSL context");
+        LOG_ERROR("Unable to create SSL context");
         ERR_print_errors_fp(stderr);
         exit(EXIT_FAILURE);
     }
@@ -77,21 +77,21 @@ void configure_context(SSL_CTX *ctx, const char *certPath, const char *keyPath)
     LOG_INFO("OK!");
 
     /* Set the key and cert */
-    logInfo(fmt::format("Loading {}!", certPath));
+    LOG_INFO(fmt::format("Loading {}!", certPath));
     if (SSL_CTX_use_certificate_file(ctx, certPath, SSL_FILETYPE_PEM) <= 0)
     {
         ERR_print_errors_fp(stderr);
         exit(EXIT_FAILURE);
     }
 
-    logInfo(fmt::format("Loading {}!", keyPath));
+    LOG_INFO(fmt::format("Loading {}!", keyPath));
     if (SSL_CTX_use_PrivateKey_file(ctx, keyPath, SSL_FILETYPE_PEM) <= 0)
     {
-        logInfo("Some sort of problem");
+        LOG_INFO("Some sort of problem");
         ERR_print_errors_fp(stderr);
         exit(EXIT_FAILURE);
     }
-    logInfo("Leaving function");
+    LOG_INFO("Leaving function");
 }
 
 int main(int argc, char **argv)
@@ -111,7 +111,7 @@ int main(int argc, char **argv)
 
     sock = create_socket(4433);
 
-    logInfo("Entering loop...");
+    LOG_INFO("Entering loop...");
     /* Handle connections */
     while (1)
     {
@@ -120,13 +120,14 @@ int main(int argc, char **argv)
         SSL               *ssl;
         const char         reply[] = "test\n";
 
-        logInfo("Waiting for client...");
+        LOG_INFO("Waiting for client...");
         int client = accept(sock, (struct sockaddr *)&addr, &len);
         if (client < 0)
         {
-            perror("Unable to accept");
+            LOG_ERROR("Unable to accept");
             exit(EXIT_FAILURE);
         }
+        LOG_INFO(fmt::format("Received client on socket {}", client));
 
         ssl = SSL_new(ctx);
         SSL_set_fd(ssl, client);
