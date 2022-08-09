@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 
+#include "helpers.hpp"
 #include "logging.hpp"
 
 void print_usage(void)
