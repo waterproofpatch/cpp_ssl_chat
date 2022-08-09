@@ -1,5 +1,9 @@
 add_executable(Server server_main.cpp)
 
+# https://hackingcpp.com/cpp/libs/fmt.html
+find_package(fmt)
+
+target_link_libraries(Server fmt::fmt)
 target_link_libraries(Server Logging)
 
 target_include_directories(Server PUBLIC "${PROJECT_BINARY_DIR}" "${PROJECT_SOURCE_DIR}/Logging")

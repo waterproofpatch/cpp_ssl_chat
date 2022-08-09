@@ -10,6 +10,8 @@
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 
+#include <fmt/core.h>
+
 #include "logging.hpp"
 
 int create_socket(int port)
@@ -40,7 +42,6 @@ int create_socket(int port)
         exit(EXIT_FAILURE);
     }
 
-    std::cout << "Listening...";
     return s;
 }
 
@@ -64,25 +65,25 @@ SSL_CTX *create_context()
 
 int my_cb(char *buf, int size, int rwflag, void *u)
 {
-    std::cout << "Setting password, buffer size is " << size << std::endl;
     strncpy(buf, (char *)u, size);
     buf[size - 1] = '\0';
     return strlen(buf);
 }
+
 void configure_context(SSL_CTX *ctx, const char *certPath, const char *keyPath)
 {
     SSL_CTX_set_default_passwd_cb_userdata(ctx, (void *)"test");
     SSL_CTX_set_default_passwd_cb(ctx, my_cb);
 
     /* Set the key and cert */
-    std::cout << "Loading " << certPath << std::endl;
+    log(LOG_INFO, fmt::format("Loading {}!", certPath));
     if (SSL_CTX_use_certificate_file(ctx, certPath, SSL_FILETYPE_PEM) <= 0)
     {
         ERR_print_errors_fp(stderr);
         exit(EXIT_FAILURE);
     }
 
-    std::cout << "Loading " << keyPath << std::endl;
+    log(LOG_INFO, fmt::format("Loading {}!", keyPath));
     if (SSL_CTX_use_PrivateKey_file(ctx, keyPath, SSL_FILETYPE_PEM) <= 0)
     {
         std::cout << "Some sort of problem..." << std::endl;
@@ -118,7 +119,7 @@ int main(int argc, char **argv)
         SSL               *ssl;
         const char         reply[] = "test\n";
 
-        std::cout << "Waiting for client..." << std::endl;
+        log(LOG_INFO, "Waiting for client...");
         int client = accept(sock, (struct sockaddr *)&addr, &len);
         if (client < 0)
         {
