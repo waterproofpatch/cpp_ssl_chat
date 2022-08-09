@@ -86,11 +86,11 @@ void configure_context(SSL_CTX *ctx, const char *certPath, const char *keyPath)
     logInfo(fmt::format("Loading {}!", keyPath));
     if (SSL_CTX_use_PrivateKey_file(ctx, keyPath, SSL_FILETYPE_PEM) <= 0)
     {
-        std::cout << "Some sort of problem..." << std::endl;
+        logInfo("Some sort of problem");
         ERR_print_errors_fp(stderr);
         exit(EXIT_FAILURE);
     }
-    std::cout << "Leaving function" << std::endl;
+    logInfo("Leaving function");
 }
 
 int main(int argc, char **argv)
@@ -110,7 +110,7 @@ int main(int argc, char **argv)
 
     sock = create_socket(4433);
 
-    std::cout << "Entering loop..." << std::endl;
+    logInfo("Entering loop...");
     /* Handle connections */
     while (1)
     {
