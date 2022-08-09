@@ -74,6 +74,7 @@ void configure_context(SSL_CTX *ctx, const char *certPath, const char *keyPath)
 {
     SSL_CTX_set_default_passwd_cb_userdata(ctx, (void *)"test");
     SSL_CTX_set_default_passwd_cb(ctx, ssl_set_password_callback);
+    LOG_INFO("OK!");
 
     /* Set the key and cert */
     logInfo(fmt::format("Loading {}!", certPath));
