@@ -63,7 +63,7 @@ SSL_CTX *create_context()
     return ctx;
 }
 
-int my_cb(char *buf, int size, int rwflag, void *u)
+int ssl_set_password_callback(char *buf, int size, int rwflag, void *u)
 {
     strncpy(buf, (char *)u, size);
     buf[size - 1] = '\0';
@@ -73,7 +73,7 @@ int my_cb(char *buf, int size, int rwflag, void *u)
 void configure_context(SSL_CTX *ctx, const char *certPath, const char *keyPath)
 {
     SSL_CTX_set_default_passwd_cb_userdata(ctx, (void *)"test");
-    SSL_CTX_set_default_passwd_cb(ctx, my_cb);
+    SSL_CTX_set_default_passwd_cb(ctx, ssl_set_password_callback);
 
     /* Set the key and cert */
     log(LOG_INFO, fmt::format("Loading {}!", certPath));
