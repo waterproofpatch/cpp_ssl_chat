@@ -32,12 +32,14 @@ class Client
     void stop()
     {
         LOG_INFO("Joining thread...");
+        close(this->socket);
         this->t->join();
         LOG_INFO("Joined thread...");
     }
     void run()
     {
         LOG_INFO("Running!");
+        SSL_write(this->ssl, "Reply!", strlen("Reply!"));
         return;
     }
     Client() = delete;
@@ -50,6 +52,8 @@ class Client
     ~Client()
     {
         LOG_INFO("Client destructing!");
+        SSL_shutdown(this->ssl);
+        SSL_free(this->ssl);
     }
 
    private:
@@ -193,12 +197,7 @@ int main(int argc, char **argv)
             Client *client = new Client(ssl, clientSockFd);
             clients.push_back(client);
             client->start();
-            SSL_write(ssl, reply, strlen(reply));
         }
-
-        SSL_shutdown(ssl);
-        SSL_free(ssl);
-        close(clientSockFd);
     }
 
     for (auto &c : clients)   // access by reference to avoid copying
