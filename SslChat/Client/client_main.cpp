@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <iostream>
 #include <netdb.h>
 #include <openssl/err.h>
 #include <openssl/ssl.h>
@@ -20,6 +21,18 @@
 
 const int ERROR_STATUS = -1;
 
+typedef struct FarEnd
+{
+    std::string ip;
+    std::string port;
+} tFarEnd;
+
+void print_usage(void)
+{
+    std::cout << "Usage: " << std::endl;
+    std::cout << "./Client <ip> <port>" << std::endl;
+}
+
 SSL_CTX *InitSSL_CTX(void)
 {
     const SSL_METHOD *method =
@@ -34,10 +47,10 @@ SSL_CTX *InitSSL_CTX(void)
     return ctx;
 }
 
-int OpenConnection(const char *hostname, const char *port)
+int OpenConnection(std::string hostname, std::string port)
 {
     struct hostent *host;
-    if ((host = gethostbyname(hostname)) == nullptr)
+    if ((host = gethostbyname(hostname.c_str())) == nullptr)
     {
         LOG_ERROR(hostname);
         exit(EXIT_FAILURE);
@@ -48,7 +61,8 @@ int OpenConnection(const char *hostname, const char *port)
     hints.ai_socktype     = SOCK_STREAM;
     hints.ai_protocol     = IPPROTO_TCP;
 
-    const int status = getaddrinfo(hostname, port, &hints, &addrs);
+    const int status =
+        getaddrinfo(hostname.c_str(), port.c_str(), &hints, &addrs);
     if (status != 0)
     {
         LOG_ERROR(fmt::format("{}: {}", hostname, gai_strerror(status)));
@@ -108,6 +122,15 @@ void DisplayCerts(SSL *ssl)
 
 int main(int argc, char const *argv[])
 {
+    if (argc < 3)
+    {
+        print_usage();
+        return 1;
+    }
+
+    tFarEnd farEnd = {std::string(argv[1]), std::string(argv[2])};
+    LOG_INFO(fmt::format("Connecting to {}:{}", argv[1], argv[2]));
+
     SSL_CTX *ctx = InitSSL_CTX();
     SSL     *ssl = SSL_new(ctx);
     if (ssl == nullptr)
@@ -117,7 +140,7 @@ int main(int argc, char const *argv[])
     }
 
     // Host is hardcoded to localhost for testing purposes
-    const int sfd = OpenConnection("127.1.0.1", argv[1]);
+    const int sfd = OpenConnection(farEnd.ip, farEnd.port);
     SSL_set_fd(ssl, sfd);
 
     const int status = SSL_connect(ssl);

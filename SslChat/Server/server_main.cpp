@@ -14,6 +14,12 @@
 
 #include "logging.hpp"
 
+void print_usage(void)
+{
+    std::cout << "Usage: " << std::endl;
+    std::cout << "./Server <path-to-cert.pem> <path-to-key.pem>" << std::endl;
+}
+
 int create_socket(int port)
 {
     int                s;

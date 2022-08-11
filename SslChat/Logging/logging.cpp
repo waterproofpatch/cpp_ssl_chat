@@ -4,12 +4,6 @@
 #include "helpers.hpp"
 #include "logging.hpp"
 
-void print_usage(void)
-{
-    std::cout << "Usage: " << std::endl;
-    std::cout << "./Server <path-to-cert.pem> <path-to-key.pem>" << std::endl;
-}
-
 void logInfo(std::string message)
 {
     log(LOG_INFO, message);

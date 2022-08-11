@@ -4,8 +4,6 @@
 
 #include <string>
 
-void print_usage(void);
-
 #define LOG_INFO(msg) \
     logInfo(fmt::format("{}:{}: {}", __FILE_NAME__, __LINE__, msg))
 #define LOG_ERROR(msg) \
