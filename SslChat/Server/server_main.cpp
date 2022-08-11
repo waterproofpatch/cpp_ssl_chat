@@ -1,4 +1,6 @@
 #include <iostream>
+#include <thread>
+#include <vector>
 
 #include <stdio.h>
 #include <string.h>
@@ -13,6 +15,45 @@
 #include <fmt/core.h>
 
 #include "logging.hpp"
+
+class Client
+{
+    int          socket;
+    SSL         *ssl;
+    std::thread *t;
+
+   public:
+    void start()
+    {
+        LOG_INFO("Starting thread...");
+        this->t = new std::thread(&Client::run, this);
+        LOG_INFO("Started thread...");
+    }
+    void stop()
+    {
+        LOG_INFO("Joining thread...");
+        this->t->join();
+        LOG_INFO("Joined thread...");
+    }
+    void run()
+    {
+        LOG_INFO("Running!");
+        return;
+    }
+    Client() = delete;
+    Client(SSL *ssl, int socket)
+    {
+        LOG_INFO("Client constructing!");
+        this->ssl    = ssl;
+        this->socket = socket;
+    }
+    ~Client()
+    {
+        LOG_INFO("Client destructing!");
+    }
+
+   private:
+};
 
 void print_usage(void)
 {
@@ -102,8 +143,9 @@ void configure_context(SSL_CTX *ctx, const char *certPath, const char *keyPath)
 
 int main(int argc, char **argv)
 {
-    int      sock;
-    SSL_CTX *ctx;
+    std::vector<Client *> clients;
+    int                   sock;
+    SSL_CTX              *ctx;
 
     if (argc < 3)
     {
@@ -127,29 +169,42 @@ int main(int argc, char **argv)
         const char         reply[] = "test\n";
 
         LOG_INFO("Waiting for client...");
-        int client = accept(sock, (struct sockaddr *)&addr, &len);
-        if (client < 0)
+        int clientSockFd = accept(sock, (struct sockaddr *)&addr, &len);
+        if (clientSockFd < 0)
         {
             LOG_ERROR("Unable to accept");
             exit(EXIT_FAILURE);
         }
-        LOG_INFO(fmt::format("Received client on socket {}", client));
+        LOG_INFO(
+            fmt::format("Received clientSockFd on socket {}", clientSockFd));
 
         ssl = SSL_new(ctx);
-        SSL_set_fd(ssl, client);
+        SSL_set_fd(ssl, clientSockFd);
 
+        LOG_INFO("Accepting SSL...");
         if (SSL_accept(ssl) <= 0)
         {
+            LOG_INFO("Problem!");
             ERR_print_errors_fp(stderr);
         }
         else
         {
+            LOG_INFO("Creating client!");
+            Client *client = new Client(ssl, clientSockFd);
+            clients.push_back(client);
+            client->start();
             SSL_write(ssl, reply, strlen(reply));
         }
 
         SSL_shutdown(ssl);
         SSL_free(ssl);
-        close(client);
+        close(clientSockFd);
+    }
+
+    for (auto &c : clients)   // access by reference to avoid copying
+    {
+        LOG_INFO("Stopping client...");
+        c->stop();
     }
 
     close(sock);
