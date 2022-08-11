@@ -159,8 +159,11 @@ int main(int argc, char const *argv[])
 
     printf("Connected with %s encryption\n", SSL_get_cipher(ssl));
     DisplayCerts(ssl);
-    const char *chars = "Hello World, 123!";
-    SSL_write(ssl, chars, strlen(chars));
+    // const char *chars = "Hello World, 123!";
+    // SSL_write(ssl, chars, strlen(chars));
+    char buffer[256];
+    SSL_read(ssl, buffer, sizeof(buffer));
+    LOG_INFO(fmt::format("Read {}", buffer));
     SSL_free(ssl);
     close(sfd);
     SSL_CTX_free(ctx);
