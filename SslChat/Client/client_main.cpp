@@ -79,6 +79,7 @@ int OpenConnection(std::string hostname, std::string port)
             continue;
         }
 
+        LOG_INFO("Calling connect...");
         if (connect(sfd, addr->ai_addr, addr->ai_addrlen) == 0)
         {
             break;
@@ -140,9 +141,11 @@ int main(int argc, char const *argv[])
     }
 
     // Host is hardcoded to localhost for testing purposes
+    LOG_INFO("OpenConnection...");
     const int sfd = OpenConnection(farEnd.ip, farEnd.port);
     SSL_set_fd(ssl, sfd);
 
+    LOG_INFO("SSL_connect...");
     const int status = SSL_connect(ssl);
     if (status != 1)
     {
