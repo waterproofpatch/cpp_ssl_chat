@@ -30,6 +30,11 @@ void processCli()
     for (std::string line; std::getline(std::cin, line);)
     {
         std::cout << line << std::endl;
+        if (line.compare("quit") == 0)
+        {
+            LOG_INFO("Quitting.");
+            return;
+        }
         LOG_PROMPT();
     }
 }
