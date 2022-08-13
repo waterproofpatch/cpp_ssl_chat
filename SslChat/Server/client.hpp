@@ -18,6 +18,7 @@ class Client
     void start();
     void stop();
     void run();
+    void log(std::string msg);
     Client() = delete;
     Client(SSL *ssl, int socket);
     ~Client();

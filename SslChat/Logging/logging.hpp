@@ -9,6 +9,8 @@
     logInfo(fmt::format("{}:{}: {}", __FILE_NAME__, __LINE__, msg), true)
 #define LOG_ERROR(msg) \
     logError(fmt::format("{}:{}: {}", __FILE_NAME__, __LINE__, msg), true)
+#define LOG_DEBUG(msg) \
+    logDebug(fmt::format("{}:{}: {}", __FILE_NAME__, __LINE__, msg), true)
 
 void logInfo(std::string message, bool newline);
 void logWarn(std::string message, bool newline);
