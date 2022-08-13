@@ -66,23 +66,18 @@ void print_usage(void)
     std::cout << "./Server <path-to-cert.pem> <path-to-key.pem>" << std::endl;
 }
 
-int main(int argc, char **argv)
+int startServer(std::string certPath, std::string keyPath, unsigned short port)
 {
     std::vector<Client *> clients;
-    int                   sock;
-    SSL_CTX              *ctx;
+    int                   sock = 0;
+    SSL_CTX              *ctx  = NULL;
 
-    if (argc < 3)
-    {
-        print_usage();
-        return 1;
-    }
-
-    sock = SslLib_createSocket(5000);
+    sock = SslLib_createSocket(port);
     ctx  = SslLib_getContext();
-    SslLib_configureContext(ctx, argv[1], argv[2]);
+    SslLib_configureContext(ctx, certPath.c_str(), keyPath.c_str());
 
     LOG_INFO("Entering loop...");
+
     /* Handle connections */
     while (1)
     {
@@ -127,4 +122,16 @@ int main(int argc, char **argv)
 
     close(sock);
     SSL_CTX_free(ctx);
+}
+
+int main(int argc, char **argv)
+{
+
+    if (argc < 3)
+    {
+        print_usage();
+        return 1;
+    }
+
+    return startServer(argv[1], argv[2], 5000);
 }
