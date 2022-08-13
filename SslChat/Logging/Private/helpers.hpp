@@ -11,6 +11,6 @@ typedef enum LogLevel
     LOG_ERROR
 } eLogLevel;
 
-void log(eLogLevel level, std::string message);
+void log(eLogLevel level, std::string message, bool newline);
 
 #endif

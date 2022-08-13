@@ -24,11 +24,22 @@ void print_usage(void)
     std::cout << "./Server <path-to-cert.pem> <path-to-key.pem>" << std::endl;
 }
 
+void processCli()
+{
+    LOG_PROMPT();
+    for (std::string line; std::getline(std::cin, line);)
+    {
+        std::cout << line << std::endl;
+        LOG_PROMPT();
+    }
+}
+
 int startServer(std::string certPath, std::string keyPath, unsigned short port)
 {
     std::vector<Client *> clients;
-    int                   sock = 0;
-    SSL_CTX              *ctx  = NULL;
+    auto                  cliThread = std::thread(processCli);
+    int                   sock      = 0;
+    SSL_CTX              *ctx       = NULL;
 
     sock = SslLib_createSocket(port);
     ctx  = SslLib_getContext();
@@ -80,6 +91,9 @@ int startServer(std::string certPath, std::string keyPath, unsigned short port)
 
     close(sock);
     SSL_CTX_free(ctx);
+
+    LOG_INFO("Joining CLI thread...");
+    cliThread.join();
 }
 
 int main(int argc, char **argv)
