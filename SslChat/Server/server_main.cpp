@@ -16,6 +16,7 @@
 // project headers
 #include "client.hpp"
 #include "logging.hpp"
+#include "safe_queue.hpp"
 #include "ssl.hpp"
 
 void print_usage(void)
@@ -24,7 +25,7 @@ void print_usage(void)
     std::cout << "./Server <path-to-cert.pem> <path-to-key.pem>" << std::endl;
 }
 
-void processCli()
+void processCli(int sock)
 {
     LOG_PROMPT();
     for (std::string line; std::getline(std::cin, line);)
@@ -33,6 +34,7 @@ void processCli()
         if (line.compare("quit") == 0)
         {
             LOG_INFO("Quitting.");
+            close(sock);
             return;
         }
         LOG_PROMPT();
@@ -41,14 +43,16 @@ void processCli()
 
 int startServer(std::string certPath, std::string keyPath, unsigned short port)
 {
+
     std::vector<Client *> clients;
-    auto                  cliThread = std::thread(processCli);
-    int                   sock      = 0;
-    SSL_CTX              *ctx       = NULL;
+    int                   sock = 0;
+    SSL_CTX              *ctx  = NULL;
 
     sock = SslLib_createSocket(port);
     ctx  = SslLib_getContext();
     SslLib_configureContext(ctx, certPath.c_str(), keyPath.c_str());
+
+    auto cliThread = std::thread(processCli, sock);
 
     LOG_INFO("Entering loop...");
 
