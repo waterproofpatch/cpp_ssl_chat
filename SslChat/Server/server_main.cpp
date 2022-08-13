@@ -85,7 +85,7 @@ int startServer(std::string certPath, std::string keyPath, unsigned short port)
         }
         else
         {
-            LOG_INFO("Creating client!");
+            LOG_INFO(fmt::format("Creating client {}...", clients.size()));
             Client *client = new Client(ssl, clientSockFd);
             clients.push_back(client);
             client->start();
