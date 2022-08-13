@@ -5,19 +5,19 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "C++ Launch (From Example)",
+			"name": "C++ Launch (Client)",
 			"type": "cppdbg",
+			"MIMode": "lldb",
 			"request": "launch",
-			"program": "/Users/freeman/sandbox/cplusplus/experiment/build/Server/Server",
-			"externalConsole": true,
-			"logging": {
-				"moduleLoad": false,
-				"trace": true
-			},
-			"showDisplayString": true
+			"program": "${workspaceFolder}/build/Client/Client",
+			"args": [
+				"127.0.0.1",
+				"5000",
+			],
+			"cwd": "${workspaceFolder}/build"
 		},
 		{
-			"name": "C++ Launch",
+			"name": "C++ Launch (Server)",
 			"type": "cppdbg",
 			"MIMode": "lldb",
 			"request": "launch",

@@ -62,6 +62,11 @@ void Client::run()
             break;
         }
         int numRead = SSL_read(this->ssl, buffer, sizeof(buffer));
+        if (numRead < 0)
+        {
+            log("Failed reading from remote client. Terminating.");
+            break;
+        }
         log(fmt::format(
             "Read {} bytes: {}",
             numRead,
