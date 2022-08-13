@@ -1,64 +1,22 @@
+// standard headers
+#include <arpa/inet.h>
 #include <iostream>
-#include <thread>
-#include <vector>
-
 #include <stdio.h>
 #include <string.h>
-
-#include <arpa/inet.h>
 #include <sys/socket.h>
+#include <thread>
 #include <unistd.h>
+#include <vector>
 
+// installed headers
+#include <fmt/core.h>
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 
-#include <fmt/core.h>
-
+// project headers
+#include "client.hpp"
 #include "logging.hpp"
 #include "ssl.hpp"
-
-class Client
-{
-    int          socket;
-    SSL         *ssl;
-    std::thread *t;
-
-   public:
-    void start()
-    {
-        LOG_INFO("Starting thread...");
-        this->t = new std::thread(&Client::run, this);
-        LOG_INFO("Started thread...");
-    }
-    void stop()
-    {
-        LOG_INFO("Joining thread...");
-        close(this->socket);
-        this->t->join();
-        LOG_INFO("Joined thread...");
-    }
-    void run()
-    {
-        LOG_INFO("Running!");
-        SSL_write(this->ssl, "Reply!", strlen("Reply!"));
-        return;
-    }
-    Client() = delete;
-    Client(SSL *ssl, int socket)
-    {
-        LOG_INFO("Client constructing!");
-        this->ssl    = ssl;
-        this->socket = socket;
-    }
-    ~Client()
-    {
-        LOG_INFO("Client destructing!");
-        SSL_shutdown(this->ssl);
-        SSL_free(this->ssl);
-    }
-
-   private:
-};
 
 void print_usage(void)
 {
