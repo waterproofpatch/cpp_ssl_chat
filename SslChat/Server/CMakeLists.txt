@@ -1,4 +1,4 @@
-add_executable(Server server_main.cpp)
+add_executable(Server server_main.cpp ssl.cpp)
 
 # https://hackingcpp.com/cpp/libs/fmt.html
 find_package(fmt)
