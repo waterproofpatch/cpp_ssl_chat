@@ -12,6 +12,7 @@ class Client
     int          socket;
     SSL         *ssl;
     std::thread *t;
+    std::string  name;
 
    public:
     void start();
@@ -20,6 +21,10 @@ class Client
     Client() = delete;
     Client(SSL *ssl, int socket);
     ~Client();
+    inline operator std::string() const
+    {
+        return fmt::format("client_{}", this->socket);
+    }
 
    private:
 };

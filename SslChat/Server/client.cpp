@@ -15,7 +15,9 @@ Client::Client(SSL *ssl, int socket)
     LOG_INFO("Client constructing!");
     this->ssl    = ssl;
     this->socket = socket;
+    this->name   = fmt::format("client_{}", this->socket);
 }
+
 Client::~Client()
 {
 
@@ -23,6 +25,7 @@ Client::~Client()
     SSL_shutdown(this->ssl);
     SSL_free(this->ssl);
 }
+
 void Client::start()
 {
     LOG_INFO("Starting thread...");

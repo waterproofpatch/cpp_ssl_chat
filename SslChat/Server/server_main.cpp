@@ -69,7 +69,7 @@ int startServer(std::string certPath, std::string keyPath, unsigned short port)
         if (clientSockFd < 0)
         {
             LOG_ERROR("Unable to accept");
-            exit(EXIT_FAILURE);
+            break;
         }
         LOG_INFO(
             fmt::format("Received clientSockFd on socket {}", clientSockFd));
@@ -94,7 +94,7 @@ int startServer(std::string certPath, std::string keyPath, unsigned short port)
 
     for (auto &c : clients)   // access by reference to avoid copying
     {
-        LOG_INFO("Stopping client...");
+        LOG_INFO(fmt::format("Stopping client... {}", std::string(*c)));
         c->stop();
     }
 
@@ -103,6 +103,8 @@ int startServer(std::string certPath, std::string keyPath, unsigned short port)
 
     LOG_INFO("Joining CLI thread...");
     cliThread.join();
+
+    return 0;
 }
 
 int main(int argc, char **argv)
