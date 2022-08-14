@@ -141,7 +141,6 @@ void readMessages(SSL *ssl)
 
 int handleMessages(SSL *ssl)
 {
-    auto readMessageThread = std::thread(readMessages, ssl);
     for (std::string line; std::getline(std::cin, line);)
     {
         std::cout << line << std::endl;
@@ -154,7 +153,6 @@ int handleMessages(SSL *ssl)
         SSL_write(ssl, line.c_str(), line.length());
         LOG_PROMPT();
     }
-    readMessageThread.join();
     return 0;
 }
 int main(int argc, char const *argv[])
@@ -196,15 +194,17 @@ int main(int argc, char const *argv[])
     printf("Connected with %s encryption\n", SSL_get_cipher(ssl));
     DisplayCerts(ssl);
 
+    auto readMessageThread = std::thread(readMessages, ssl);
     if (handleMessages(ssl) < 0)
     {
         LOG_ERROR("handleMessages returned an error!");
     }
 
-    SSL_free(ssl);
     close(sfd);
-    SSL_CTX_free(ctx);
     LOG_INFO("Waiting for readMessageThread to join...");
+    readMessageThread.join();
     LOG_INFO("readMessageThread joined.");
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
     return 0;
 }
