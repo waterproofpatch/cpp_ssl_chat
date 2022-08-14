@@ -5,6 +5,7 @@
 #include <openssl/ssl.h>
 #include <resolv.h>
 #include <string.h>
+#include <thread>
 #include <unistd.h>
 
 #include <fmt/core.h>
@@ -121,6 +122,41 @@ void DisplayCerts(SSL *ssl)
     }
 }
 
+void readMessages(SSL *ssl)
+{
+
+    while (1)
+    {
+        char buffer[256];
+        int  numRead = SSL_read(ssl, buffer, sizeof(buffer));
+        if (numRead < 0)
+        {
+            LOG_INFO("Server closed connection!");
+            break;
+        }
+        LOG_INFO(fmt::format("Read {}", buffer));
+    }
+    LOG_INFO("Tearing down!");
+}
+
+int handleMessages(SSL *ssl)
+{
+    auto readMessageThread = std::thread(readMessages, ssl);
+    for (std::string line; std::getline(std::cin, line);)
+    {
+        std::cout << line << std::endl;
+        if (line.compare("quit") == 0)
+        {
+            LOG_INFO("Quitting.");
+            break;
+        }
+        LOG_INFO(fmt::format("Sending {}", line));
+        SSL_write(ssl, line.c_str(), line.length());
+        LOG_PROMPT();
+    }
+    readMessageThread.join();
+    return 0;
+}
 int main(int argc, char const *argv[])
 {
     if (argc < 3)
@@ -159,23 +195,16 @@ int main(int argc, char const *argv[])
 
     printf("Connected with %s encryption\n", SSL_get_cipher(ssl));
     DisplayCerts(ssl);
-    // const char *chars = "Hello World, 123!";
-    // SSL_write(ssl, chars, strlen(chars));
-    char buffer[256];
-    SSL_read(ssl, buffer, sizeof(buffer));
-    LOG_INFO(fmt::format("Read {}", buffer));
+
+    if (handleMessages(ssl) < 0)
+    {
+        LOG_ERROR("handleMessages returned an error!");
+    }
+
     SSL_free(ssl);
     close(sfd);
     SSL_CTX_free(ctx);
-    for (std::string line; std::getline(std::cin, line);)
-    {
-        std::cout << line << std::endl;
-        if (line.compare("quit") == 0)
-        {
-            LOG_INFO("Quitting.");
-            return 0;
-        }
-        LOG_PROMPT();
-    }
+    LOG_INFO("Waiting for readMessageThread to join...");
+    LOG_INFO("readMessageThread joined.");
     return 0;
 }
