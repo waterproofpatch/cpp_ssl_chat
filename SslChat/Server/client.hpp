@@ -9,16 +9,13 @@
 
 class Client
 {
-    int          socket;
-    SSL         *ssl;
-    std::thread *t;
-    std::string  name;
+    int         socket;
+    SSL        *ssl;
+    std::string name;
 
    public:
-    void start();
-    void stop();
-    void run();
     void log(std::string msg);
+    int  sendMessage(const char *message, size_t len);
     Client() = delete;
     Client(SSL *ssl, int socket);
     ~Client();

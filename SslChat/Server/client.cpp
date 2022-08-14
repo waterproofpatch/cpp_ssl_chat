@@ -1,5 +1,4 @@
 // standard headers
-#include <thread>
 #include <unistd.h>
 
 // installed headers
@@ -33,44 +32,14 @@ void Client::log(std::string msg)
     LOG_INFO(fmt::format("{}: {}", me, msg));
 }
 
-void Client::start()
+int Client::sendMessage(const char *message, size_t len)
 {
-    LOG_INFO("Starting thread...");
-    this->t = new std::thread(&Client::run, this);
-    LOG_INFO("Started thread...");
-}
-
-void Client::stop()
-{
-    LOG_INFO("Joining thread...");
-    close(this->socket);
-    this->t->join();
-    LOG_INFO("Joined thread...");
-}
-
-void Client::run()
-{
-    LOG_INFO("Running!");
-    unsigned char buffer[256] = {};
-    while (1)
+    log("Handling message!");
+    int numWritten = SSL_write(this->ssl, message, len);
+    if (numWritten < 0)
     {
-
-        int numWritten = SSL_write(this->ssl, "Reply!", strlen("Reply!"));
-        if (numWritten < 0)
-        {
-            log("Failed writing.");
-            break;
-        }
-        int numRead = SSL_read(this->ssl, buffer, sizeof(buffer));
-        if (numRead < 0)
-        {
-            log("Failed reading from remote client. Terminating.");
-            break;
-        }
-        log(fmt::format(
-            "Read {} bytes: {}",
-            numRead,
-            std::string(reinterpret_cast<char const *>(buffer), numRead)));
+        this->log("Error!");
+        return -1;
     }
-    return;
+    return 0;
 }

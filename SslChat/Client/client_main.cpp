@@ -167,5 +167,15 @@ int main(int argc, char const *argv[])
     SSL_free(ssl);
     close(sfd);
     SSL_CTX_free(ctx);
+    for (std::string line; std::getline(std::cin, line);)
+    {
+        std::cout << line << std::endl;
+        if (line.compare("quit") == 0)
+        {
+            LOG_INFO("Quitting.");
+            return 0;
+        }
+        LOG_PROMPT();
+    }
     return 0;
 }

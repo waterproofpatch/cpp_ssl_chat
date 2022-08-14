@@ -62,7 +62,6 @@ int startServer(std::string certPath, std::string keyPath, unsigned short port)
         struct sockaddr_in addr;
         unsigned int       len = sizeof(addr);
         SSL               *ssl;
-        const char         reply[] = "test\n";
 
         LOG_INFO("Waiting for client...");
         int clientSockFd = accept(sock, (struct sockaddr *)&addr, &len);
@@ -88,15 +87,15 @@ int startServer(std::string certPath, std::string keyPath, unsigned short port)
             LOG_INFO(fmt::format("Creating client {}...", clients.size()));
             Client *client = new Client(ssl, clientSockFd);
             clients.push_back(client);
-            client->start();
+            if (client->sendMessage("Hello Client!", 13) < 0)
+            {
+                LOG_ERROR("Client failed sending!");
+                break;
+            }
         }
     }
 
-    for (auto &c : clients)   // access by reference to avoid copying
-    {
-        LOG_INFO(fmt::format("Stopping client... {}", std::string(*c)));
-        c->stop();
-    }
+    clients.clear();
 
     close(sock);
     SSL_CTX_free(ctx);
