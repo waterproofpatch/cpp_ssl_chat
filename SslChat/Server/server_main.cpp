@@ -29,7 +29,12 @@ void print_usage(void)
     std::cout << "./Server <path-to-cert.pem> <path-to-key.pem>" << std::endl;
 }
 
-void processCli(int sock)
+/**
+ * @brief handle the CLI
+ *
+ * @param sock the master socket. Closed when 'quit' is entered at the CLI.
+ */
+void processCliThread(int serverSocket)
 {
     LOG_PROMPT();
     for (std::string line; std::getline(std::cin, line);)
@@ -38,7 +43,7 @@ void processCli(int sock)
         if (line.compare("quit") == 0)
         {
             LOG_INFO("Quitting.");
-            close(sock);
+            close(serverSocket);
             return;
         }
         LOG_PROMPT();
@@ -62,25 +67,29 @@ int processClients(std::string    certPath,
                    unsigned short port)
 {
     std::vector<Client *> clients;
-    int                   master_socket = 0;
-    SSL_CTX              *ctx           = NULL;
+    int                   master_socket  = 0;
+    SSL_CTX              *ctx            = NULL;
+    std::string           welcomeMessage = "Welcome!";
+    struct sockaddr_in    address;
+    int                   addrlen    = 0;
+    int                   new_socket = 0;
+    int                   client_socket[30];
+    int                   max_clients  = 30;
+    int                   activity     = 0;
+    int                   i            = 0;
+    int                   valread      = 0;
+    int                   sd           = 0;
+    int                   max_sd       = 0;
+    char                  buffer[1025] = {0};   // data buffer of 1K
+
+    // set of socket descriptors
+    fd_set readfds;
 
     master_socket = SslLib_createSocket(port);
     ctx           = SslLib_getContext();
     SslLib_configureContext(ctx, certPath.c_str(), keyPath.c_str());
 
-    auto cliThread = std::thread(processCli, master_socket);
-
-    int opt = TRUE;
-    int addrlen, new_socket, client_socket[30], max_clients = 30, activity, i,
-                                                valread, sd;
-    int                max_sd;
-    struct sockaddr_in address;
-
-    char buffer[1025] = {0};   // data buffer of 1K
-
-    // set of socket descriptors
-    fd_set readfds;
+    auto cliThread = std::thread(processCliThread, master_socket);
 
     // initialise all client_socket[] to 0 so not checked
     for (i = 0; i < max_clients; i++)
@@ -162,8 +171,10 @@ int processClients(std::string    certPath,
             }
             else
             {
-                LOG_INFO(fmt::format("Creating client {}...", clients.size()));
-                if (SSL_write(ssl, "Hello Client!", 13) < 0)
+                LOG_INFO("New client!");
+                if (SSL_write(ssl,
+                              welcomeMessage.c_str(),
+                              welcomeMessage.length()) < 0)
                 {
                     LOG_ERROR("Client failed sending!");
                     break;
@@ -173,7 +184,7 @@ int processClients(std::string    certPath,
             // inform user of socket number - used in send and receive
             // commands
             LOG_INFO(fmt::format(
-                "New connection , socket fd is {} , ip is : {} , port : {}",
+                "New connection, socket fd is {}, ip is: {}, port: {}",
                 new_socket,
                 inet_ntoa(address.sin_addr),
                 ntohs(address.sin_port)));
@@ -185,7 +196,10 @@ int processClients(std::string    certPath,
                 if (client_socket[i] == 0)
                 {
                     client_socket[i] = new_socket;
-                    LOG_INFO(fmt::format("Adding to list of sockets as {}", i));
+                    LOG_INFO(
+                        fmt::format("Adding to list of sockets at "
+                                    "client_sockets position {}",
+                                    i));
 
                     break;
                 }

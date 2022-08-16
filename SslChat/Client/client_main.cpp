@@ -101,24 +101,24 @@ int OpenConnection(std::string hostname, std::string port)
     return sfd;
 }
 
-void DisplayCerts(SSL *ssl)
+void displayCerts(SSL *ssl)
 {
     X509 *cert =
         SSL_get_peer_certificate(ssl); /* get the server's certificate */
     if (cert != nullptr)
     {
-        printf("Server certificates:\n");
+        LOG_INFO("Server certificates:");
         char *line = X509_NAME_oneline(X509_get_subject_name(cert), 0, 0);
-        printf("Subject: %s\n", line);
+        LOG_INFO(fmt::format("Subject: {}", line));
         delete line;
         line = X509_NAME_oneline(X509_get_issuer_name(cert), 0, 0);
-        printf("Issuer: %s\n", line);
+        LOG_INFO(fmt::format("Issuer: {}", line));
         delete line;
         X509_free(cert);
     }
     else
     {
-        printf("Info: No client certificates configured.\n");
+        LOG_INFO("Info: No client certificates configured.\n");
     }
 }
 
@@ -191,8 +191,8 @@ int main(int argc, char const *argv[])
         exit(EXIT_FAILURE);
     }
 
-    printf("Connected with %s encryption\n", SSL_get_cipher(ssl));
-    DisplayCerts(ssl);
+    LOG_INFO(fmt::format("Connected with {} encryption", SSL_get_cipher(ssl)));
+    displayCerts(ssl);
 
     auto readMessageThread = std::thread(readMessages, ssl);
     if (handleMessages(ssl) < 0)
