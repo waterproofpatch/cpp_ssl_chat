@@ -139,12 +139,16 @@ int processClients(std::string    certPath,
 
             // if valid socket descriptor then add to read list
             if (sd > 0)
+            {
                 FD_SET(sd, &readfds);
+            }
 
             // highest file descriptor number, need it for the select
             // function
             if (sd > max_sd)
+            {
                 max_sd = sd;
+            }
         }
 
         // wait for an activity on one of the sockets , timeout is NULL ,
@@ -208,7 +212,6 @@ int processClients(std::string    certPath,
                         fmt::format("Adding to list of sockets at "
                                     "client_sockets position {}",
                                     i));
-
                     break;
                 }
             }
