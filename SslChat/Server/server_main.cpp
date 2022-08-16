@@ -62,6 +62,35 @@ Client *getClientBySocket(std::vector<Client *> &clients, int socket)
     return NULL;
 }
 
+void initServer(int                 socket,
+                int                 max_clients,
+                int                 client_socket[],
+                struct sockaddr_in &address,
+                unsigned short      port,
+                int                &addrlen)
+{
+    // initialise all client_socket[] to 0 so not checked
+    for (int i = 0; i < max_clients; i++)
+    {
+        client_socket[i] = 0;
+    }
+
+    // type of socket created
+    address.sin_family      = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port        = htons(port);
+    LOG_INFO(fmt::format("Listening on port {}", port));
+
+    // try to specify maximum of 3 pending connections for the master socket
+    if (listen(socket, 3) < 0)
+    {
+        perror("listen");
+        exit(EXIT_FAILURE);
+    }
+
+    // accept the incoming connection
+    addrlen = sizeof(address);
+}
 int processClients(std::string    certPath,
                    std::string    keyPath,
                    unsigned short port)
@@ -81,39 +110,18 @@ int processClients(std::string    certPath,
     int                   sd           = 0;
     int                   max_sd       = 0;
     char                  buffer[1025] = {0};   // data buffer of 1K
-
-    // set of socket descriptors
-    fd_set readfds;
+    fd_set                readfds;
+    std::thread           cliThread;
 
     master_socket = SslLib_createSocket(port);
     ctx           = SslLib_getContext();
     SslLib_configureContext(ctx, certPath.c_str(), keyPath.c_str());
+    cliThread = std::thread(processCliThread, master_socket);
 
-    auto cliThread = std::thread(processCliThread, master_socket);
+    initServer(
+        master_socket, max_clients, client_socket, address, port, addrlen);
 
-    // initialise all client_socket[] to 0 so not checked
-    for (i = 0; i < max_clients; i++)
-    {
-        client_socket[i] = 0;
-    }
-
-    // type of socket created
-    address.sin_family      = AF_INET;
-    address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port        = htons(port);
-    LOG_INFO(fmt::format("Listening on port {}", port));
-
-    // try to specify maximum of 3 pending connections for the master socket
-    if (listen(master_socket, 3) < 0)
-    {
-        perror("listen");
-        exit(EXIT_FAILURE);
-    }
-
-    // accept the incoming connection
-    addrlen = sizeof(address);
-    puts("Waiting for connections ...");
-
+    LOG_INFO("Waiting for connections ...");
     while (TRUE)
     {
         // clear the socket set
