@@ -14,8 +14,16 @@ class Client
     std::string name;
 
    public:
-    void log(std::string msg);
-    int  sendMessage(const char *message, size_t len);
+    void       log(std::string msg);
+    inline int getSocket()
+    {
+        return this->socket;
+    }
+    inline SSL *getSsl()
+    {
+        return this->ssl;
+    }
+    int sendMessage(const char *message, size_t len);
     Client() = delete;
     Client(SSL *ssl, int socket);
     ~Client();

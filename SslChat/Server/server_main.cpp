@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <sys/time.h>   //FD_SET, FD_ISSET, FD_ZERO macros
 #include <thread>
 #include <unistd.h>
 #include <vector>
@@ -18,6 +19,9 @@
 #include "logging.hpp"
 #include "safe_queue.hpp"
 #include "ssl.hpp"
+
+#define TRUE 1
+#define FALSE 0
 
 void print_usage(void)
 {
@@ -41,68 +45,193 @@ void processCli(int sock)
     }
 }
 
-int startServer(std::string certPath, std::string keyPath, unsigned short port)
+Client *getClientBySocket(std::vector<Client *> &clients, int socket)
 {
+    for (auto &client : clients)
+    {
+        if (client->getSocket() == socket)
+        {
+            return client;
+        }
+    }
+    return NULL;
+}
 
+int processClients(std::string    certPath,
+                   std::string    keyPath,
+                   unsigned short port)
+{
     std::vector<Client *> clients;
-    int                   sock = 0;
-    SSL_CTX              *ctx  = NULL;
+    int                   master_socket = 0;
+    SSL_CTX              *ctx           = NULL;
 
-    sock = SslLib_createSocket(port);
-    ctx  = SslLib_getContext();
+    master_socket = SslLib_createSocket(port);
+    ctx           = SslLib_getContext();
     SslLib_configureContext(ctx, certPath.c_str(), keyPath.c_str());
 
-    auto cliThread = std::thread(processCli, sock);
+    auto cliThread = std::thread(processCli, master_socket);
 
-    LOG_INFO("Entering loop...");
+    int opt = TRUE;
+    int addrlen, new_socket, client_socket[30], max_clients = 30, activity, i,
+                                                valread, sd;
+    int                max_sd;
+    struct sockaddr_in address;
 
-    /* Handle connections */
-    while (1)
+    char buffer[1025] = {0};   // data buffer of 1K
+
+    // set of socket descriptors
+    fd_set readfds;
+
+    // initialise all client_socket[] to 0 so not checked
+    for (i = 0; i < max_clients; i++)
     {
-        struct sockaddr_in addr;
-        unsigned int       len = sizeof(addr);
-        SSL               *ssl;
+        client_socket[i] = 0;
+    }
 
-        LOG_INFO("Waiting for client...");
-        int clientSockFd = accept(sock, (struct sockaddr *)&addr, &len);
-        if (clientSockFd < 0)
+    // type of socket created
+    address.sin_family      = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port        = htons(port);
+    LOG_INFO(fmt::format("Listening on port {}", port));
+
+    // try to specify maximum of 3 pending connections for the master socket
+    if (listen(master_socket, 3) < 0)
+    {
+        perror("listen");
+        exit(EXIT_FAILURE);
+    }
+
+    // accept the incoming connection
+    addrlen = sizeof(address);
+    puts("Waiting for connections ...");
+
+    while (TRUE)
+    {
+        // clear the socket set
+        FD_ZERO(&readfds);
+
+        // add master socket to set
+        FD_SET(master_socket, &readfds);
+        max_sd = master_socket;
+
+        // add child sockets to set
+        for (i = 0; i < max_clients; i++)
         {
-            LOG_ERROR("Unable to accept");
-            break;
+            // socket descriptor
+            sd = client_socket[i];
+
+            // if valid socket descriptor then add to read list
+            if (sd > 0)
+                FD_SET(sd, &readfds);
+
+            // highest file descriptor number, need it for the select
+            // function
+            if (sd > max_sd)
+                max_sd = sd;
         }
-        LOG_INFO(
-            fmt::format("Received clientSockFd on socket {}", clientSockFd));
 
-        ssl = SSL_new(ctx);
-        SSL_set_fd(ssl, clientSockFd);
+        // wait for an activity on one of the sockets , timeout is NULL ,
+        // so wait indefinitely
+        activity = select(max_sd + 1, &readfds, NULL, NULL, NULL);
 
-        LOG_INFO("Accepting SSL...");
-        if (SSL_accept(ssl) <= 0)
+        if ((activity < 0) && (errno != EINTR))
         {
-            LOG_INFO("Problem!");
-            ERR_print_errors_fp(stderr);
+            LOG_INFO("select error");
         }
-        else
+
+        // If something happened on the master socket ,
+        // then its an incoming connection
+        if (FD_ISSET(master_socket, &readfds))
         {
-            LOG_INFO(fmt::format("Creating client {}...", clients.size()));
-            Client *client = new Client(ssl, clientSockFd);
-            clients.push_back(client);
-            if (client->sendMessage("Hello Client!", 13) < 0)
+            if ((new_socket = accept(master_socket,
+                                     (struct sockaddr *)&address,
+                                     (socklen_t *)&addrlen)) < 0)
             {
-                LOG_ERROR("Client failed sending!");
-                break;
+                perror("accept");
+                exit(EXIT_FAILURE);
+            }
+            SSL *ssl = SSL_new(ctx);
+            SSL_set_fd(ssl, new_socket);
+            clients.push_back(new Client(ssl, new_socket));
+
+            LOG_INFO("Accepting SSL...");
+            if (SSL_accept(ssl) <= 0)
+            {
+                LOG_INFO("Problem!");
+                ERR_print_errors_fp(stderr);
+            }
+            else
+            {
+                LOG_INFO(fmt::format("Creating client {}...", clients.size()));
+                if (SSL_write(ssl, "Hello Client!", 13) < 0)
+                {
+                    LOG_ERROR("Client failed sending!");
+                    break;
+                }
+            }
+
+            // inform user of socket number - used in send and receive
+            // commands
+            LOG_INFO(fmt::format(
+                "New connection , socket fd is {} , ip is : {} , port : {}",
+                new_socket,
+                inet_ntoa(address.sin_addr),
+                ntohs(address.sin_port)));
+
+            // add new socket to array of sockets
+            for (i = 0; i < max_clients; i++)
+            {
+                // if position is empty
+                if (client_socket[i] == 0)
+                {
+                    client_socket[i] = new_socket;
+                    LOG_INFO(fmt::format("Adding to list of sockets as {}", i));
+
+                    break;
+                }
+            }
+        }
+
+        // else its some IO operation on some other socket
+        for (i = 0; i < max_clients; i++)
+        {
+            sd = client_socket[i];
+
+            if (FD_ISSET(sd, &readfds))
+            {
+                // Check if it was for closing , and also read the
+                // incoming message
+                memset(buffer, 0, sizeof(buffer));
+                if ((valread =
+                         SSL_read(getClientBySocket(clients, sd)->getSsl(),
+                                  buffer,
+                                  1024)) == 0)
+                {
+                    // Somebody disconnected , get his details and print
+                    getpeername(
+                        sd, (struct sockaddr *)&address, (socklen_t *)&addrlen);
+                    LOG_INFO(fmt::format("Host disconnected , ip {} , port {}",
+                                         inet_ntoa(address.sin_addr),
+                                         ntohs(address.sin_port)));
+
+                    // Close the socket and mark as 0 in list for reuse
+                    close(sd);
+                    client_socket[i] = 0;
+                }
+
+                // Echo back the message that came in
+                else
+                {
+                    // set the string terminating NULL byte on the end
+                    // of the data read
+                    buffer[valread] = '\0';
+                    SSL_write(getClientBySocket(clients, sd)->getSsl(),
+                              buffer,
+                              strlen(buffer));
+                }
             }
         }
     }
-
-    clients.clear();
-
-    close(sock);
-    SSL_CTX_free(ctx);
-
-    LOG_INFO("Joining CLI thread...");
-    cliThread.join();
-
     return 0;
 }
 
@@ -115,5 +244,5 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    return startServer(argv[1], argv[2], 5000);
+    return processClients(argv[1], argv[2], 5000);
 }
