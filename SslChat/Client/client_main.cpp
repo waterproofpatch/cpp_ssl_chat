@@ -127,14 +127,14 @@ void readMessages(SSL *ssl)
 
     while (1)
     {
-        char buffer[256];
-        int  numRead = SSL_read(ssl, buffer, sizeof(buffer));
+        char buffer[1024] = {0};
+        int  numRead      = SSL_read(ssl, buffer, sizeof(buffer));
         if (numRead < 0)
         {
             LOG_INFO("Server closed connection!");
             break;
         }
-        LOG_INFO(fmt::format("Read {}", buffer));
+        LOG_INFO(fmt::format("Read [{}]", buffer));
     }
     LOG_INFO("Tearing down!");
 }
@@ -149,7 +149,7 @@ int handleMessages(SSL *ssl)
             LOG_INFO("Quitting.");
             break;
         }
-        LOG_INFO(fmt::format("Sending {}", line));
+        LOG_INFO(fmt::format("Sending [{}]", line));
         SSL_write(ssl, line.c_str(), line.length());
         LOG_PROMPT();
     }
