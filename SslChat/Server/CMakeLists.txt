@@ -1,4 +1,4 @@
-add_executable(Server server_main.cpp ssl.cpp client.cpp initServer.cpp)
+add_executable(Server server_main.cpp ssl.cpp client.cpp initServer.cpp processClients.cpp processCliThread.cpp handleNewConnection.cpp resetFd.cpp)
 
 # https://hackingcpp.com/cpp/libs/fmt.html
 find_package(fmt)

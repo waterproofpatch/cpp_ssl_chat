@@ -1,7 +1,10 @@
+#ifndef CLIENT_HPP
+#define CLIENT_HPP
 // standard headers
 #include <thread>
 
 // installed headers
+#include <fmt/core.h>
 #include <openssl/ssl.h>
 
 // project headers
@@ -34,3 +37,5 @@ class Client
 
    private:
 };
+
+#endif
