@@ -248,7 +248,7 @@ int processClients(std::string    certPath,
 
             if (FD_ISSET(sd, &readfds))
             {
-                // Check if it was for closing , and also read the
+                // Check if it was for closing, and also read the
                 // incoming message
                 memset(buffer, 0, sizeof(buffer));
                 if ((valread =
@@ -257,9 +257,11 @@ int processClients(std::string    certPath,
                     // Somebody disconnected , get his details and print
                     getpeername(
                         sd, (struct sockaddr *)&address, (socklen_t *)&addrlen);
-                    LOG_INFO(fmt::format("Host disconnected , ip {} , port {}",
-                                         inet_ntoa(address.sin_addr),
-                                         ntohs(address.sin_port)));
+                    LOG_INFO(
+                        fmt::format("Client {} disconnected, ip {} , port {}",
+                                    sd,
+                                    inet_ntoa(address.sin_addr),
+                                    ntohs(address.sin_port)));
 
                     // Close the socket and mark as 0 in list for reuse
                     close(sd);
@@ -273,6 +275,7 @@ int processClients(std::string    certPath,
                     // set the string terminating NULL byte on the end
                     // of the data read
                     buffer[valread] = '\0';
+                    LOG_INFO(fmt::format("Client {} sent [{}]", sd, buffer));
                     SSL_write(clients.at(sd)->getSsl(), buffer, strlen(buffer));
                 }
             }
