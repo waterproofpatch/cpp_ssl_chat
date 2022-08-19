@@ -10,11 +10,10 @@
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 
+#include "constants.hpp"
 #include "logging.hpp"
 #include "ssl.hpp"
 #include "types.hpp"
-
-const int ERROR_STATUS = -1;
 
 void printUsage(void)
 {
