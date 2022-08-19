@@ -23,7 +23,7 @@
 #define TRUE 1
 #define FALSE 0
 
-void print_usage(void)
+static void print_usage(void)
 {
     std::cout << "Usage: " << std::endl;
     std::cout << "./Server <path-to-cert.pem> <path-to-key.pem>" << std::endl;
