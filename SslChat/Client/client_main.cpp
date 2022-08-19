@@ -12,22 +12,17 @@
 
 #include "logging.hpp"
 #include "ssl.hpp"
+#include "types.hpp"
 
 const int ERROR_STATUS = -1;
 
-typedef struct FarEnd
-{
-    std::string ip;
-    std::string port;
-} tFarEnd;
-
-void print_usage(void)
+void printUsage(void)
 {
     std::cout << "Usage: " << std::endl;
     std::cout << "./Client <ip> <port>" << std::endl;
 }
 
-int OpenConnection(std::string hostname, std::string port)
+int openConnection(std::string hostname, std::string port)
 {
     struct hostent *host;
     if ((host = gethostbyname(hostname.c_str())) == nullptr)
@@ -113,11 +108,12 @@ int handleMessages(SSL *ssl)
     }
     return 0;
 }
+
 int main(int argc, char const *argv[])
 {
     if (argc < 3)
     {
-        print_usage();
+        printUsage();
         return 1;
     }
 
@@ -133,8 +129,8 @@ int main(int argc, char const *argv[])
     }
 
     // Host is hardcoded to localhost for testing purposes
-    LOG_INFO("OpenConnection...");
-    const int sfd = OpenConnection(farEnd.ip, farEnd.port);
+    LOG_INFO("openConnection...");
+    const int sfd = openConnection(farEnd.ip, farEnd.port);
     SSL_set_fd(ssl, sfd);
 
     LOG_INFO("SSL_connect...");
