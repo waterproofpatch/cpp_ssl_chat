@@ -1,13 +1,13 @@
 // standard headers
 #include <arpa/inet.h>
 #include <iostream>
+#include <map>
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/time.h>   //FD_SET, FD_ISSET, FD_ZERO macros
 #include <thread>
 #include <unistd.h>
-#include <vector>
 
 // installed headers
 #include <fmt/core.h>
@@ -48,18 +48,6 @@ void processCliThread(int serverSocket)
         }
         LOG_PROMPT();
     }
-}
-
-Client *getClientBySocket(std::vector<Client *> &clients, int socket)
-{
-    for (auto &client : clients)
-    {
-        if (client->getSocket() == socket)
-        {
-            return client;
-        }
-    }
-    return NULL;
 }
 
 int initServer(int                 socket,
@@ -128,13 +116,13 @@ int resetFd(int     master_socket,
     return max_sd;
 }
 
-int handleNewConnection(int                    master_socket,
-                        sockaddr_in           &address,
-                        int                   &addrlen,
-                        SSL_CTX               *ctx,
-                        std::vector<Client *> &clients,
-                        int                    max_clients,
-                        int                    client_socket[])
+int handleNewConnection(int                      master_socket,
+                        sockaddr_in             &address,
+                        int                     &addrlen,
+                        SSL_CTX                 *ctx,
+                        std::map<int, Client *> &clients,
+                        int                      max_clients,
+                        int                      client_socket[])
 {
     std::string welcomeMessage = "Welcome!";
     int         new_socket;
@@ -149,7 +137,8 @@ int handleNewConnection(int                    master_socket,
 
     SSL *ssl = SSL_new(ctx);
     SSL_set_fd(ssl, new_socket);
-    clients.push_back(new Client(ssl, new_socket));
+    clients.insert(
+        std::pair<int, Client *>(new_socket, new Client(ssl, new_socket)));
 
     LOG_INFO("Accepting SSL...");
     if (SSL_accept(ssl) <= 0)
@@ -195,20 +184,20 @@ int processClients(std::string    certPath,
                    std::string    keyPath,
                    unsigned short port)
 {
-    std::vector<Client *> clients;
-    int                   master_socket = 0;
-    SSL_CTX              *ctx           = NULL;
-    struct sockaddr_in    address;
-    int                   addrlen    = 0;
-    int                   new_socket = 0;
-    int                   client_socket[30];
-    int                   max_clients  = 30;
-    int                   activity     = 0;
-    int                   i            = 0;
-    int                   valread      = 0;
-    char                  buffer[1025] = {0};   // data buffer of 1K
-    fd_set                readfds;
-    std::thread           cliThread;
+    std::map<int, Client *> clients;
+    int                     master_socket = 0;
+    SSL_CTX                *ctx           = NULL;
+    struct sockaddr_in      address;
+    int                     addrlen    = 0;
+    int                     new_socket = 0;
+    int                     client_socket[30];
+    int                     max_clients  = 30;
+    int                     activity     = 0;
+    int                     i            = 0;
+    int                     valread      = 0;
+    char                    buffer[1025] = {0};   // data buffer of 1K
+    fd_set                  readfds;
+    std::thread             cliThread;
 
     master_socket = SslLib_createSocket(port);
     ctx           = SslLib_getContext();
@@ -263,9 +252,7 @@ int processClients(std::string    certPath,
                 // incoming message
                 memset(buffer, 0, sizeof(buffer));
                 if ((valread =
-                         SSL_read(getClientBySocket(clients, sd)->getSsl(),
-                                  buffer,
-                                  1024)) == 0)
+                         SSL_read(clients.at(sd)->getSsl(), buffer, 1024)) == 0)
                 {
                     // Somebody disconnected , get his details and print
                     getpeername(
@@ -277,6 +264,7 @@ int processClients(std::string    certPath,
                     // Close the socket and mark as 0 in list for reuse
                     close(sd);
                     client_socket[i] = 0;
+                    clients.erase(sd);
                 }
 
                 // Echo back the message that came in
@@ -285,9 +273,7 @@ int processClients(std::string    certPath,
                     // set the string terminating NULL byte on the end
                     // of the data read
                     buffer[valread] = '\0';
-                    SSL_write(getClientBySocket(clients, sd)->getSsl(),
-                              buffer,
-                              strlen(buffer));
+                    SSL_write(clients.at(sd)->getSsl(), buffer, strlen(buffer));
                 }
             }
         }
