@@ -1,16 +1,17 @@
 #include <errno.h>
 #include <iostream>
 #include <netdb.h>
-#include <openssl/err.h>
-#include <openssl/ssl.h>
 #include <resolv.h>
 #include <string.h>
 #include <thread>
 #include <unistd.h>
 
 #include <fmt/core.h>
+#include <openssl/err.h>
+#include <openssl/ssl.h>
 
 #include "logging.hpp"
+#include "ssl.hpp"
 
 // Not sure what headers are needed or not
 // This code (theoretically) writes "Hello World, 123" to a socket over a secure
@@ -32,20 +33,6 @@ void print_usage(void)
 {
     std::cout << "Usage: " << std::endl;
     std::cout << "./Client <ip> <port>" << std::endl;
-}
-
-SSL_CTX *InitSSL_CTX(void)
-{
-    const SSL_METHOD *method =
-        TLS_client_method(); /* Create new client-method instance */
-    SSL_CTX *ctx = SSL_CTX_new(method);
-
-    if (ctx == nullptr)
-    {
-        ERR_print_errors_fp(stderr);
-        exit(EXIT_FAILURE);
-    }
-    return ctx;
 }
 
 int OpenConnection(std::string hostname, std::string port)
@@ -101,27 +88,6 @@ int OpenConnection(std::string hostname, std::string port)
     return sfd;
 }
 
-void displayCerts(SSL *ssl)
-{
-    X509 *cert =
-        SSL_get_peer_certificate(ssl); /* get the server's certificate */
-    if (cert != nullptr)
-    {
-        LOG_INFO("Server certificates:");
-        char *line = X509_NAME_oneline(X509_get_subject_name(cert), 0, 0);
-        LOG_INFO(fmt::format("Subject: {}", line));
-        delete line;
-        line = X509_NAME_oneline(X509_get_issuer_name(cert), 0, 0);
-        LOG_INFO(fmt::format("Issuer: {}", line));
-        delete line;
-        X509_free(cert);
-    }
-    else
-    {
-        LOG_INFO("Info: No client certificates configured.\n");
-    }
-}
-
 void readMessages(SSL *ssl)
 {
 
@@ -166,7 +132,7 @@ int main(int argc, char const *argv[])
     tFarEnd farEnd = {std::string(argv[1]), std::string(argv[2])};
     LOG_INFO(fmt::format("Connecting to {}:{}", argv[1], argv[2]));
 
-    SSL_CTX *ctx = InitSSL_CTX();
+    SSL_CTX *ctx = SslLib_initCtx();
     SSL     *ssl = SSL_new(ctx);
     if (ssl == nullptr)
     {
@@ -192,7 +158,7 @@ int main(int argc, char const *argv[])
     }
 
     LOG_INFO(fmt::format("Connected with {} encryption", SSL_get_cipher(ssl)));
-    displayCerts(ssl);
+    SslLib_displayCerts(ssl);
 
     auto readMessageThread = std::thread(readMessages, ssl);
     if (handleMessages(ssl) < 0)
