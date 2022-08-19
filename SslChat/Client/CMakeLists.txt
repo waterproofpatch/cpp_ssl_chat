@@ -1,4 +1,4 @@
-add_executable(Client client_main.cpp ssl.cpp openConnection.cpp handleMessages.cpp)
+add_executable(Client client_main.cpp ssl.cpp openConnection.cpp handleMessages.cpp readMessages.cpp)
 
 # https://hackingcpp.com/cpp/libs/fmt.html
 find_package(fmt)

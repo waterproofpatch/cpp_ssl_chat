@@ -14,30 +14,14 @@
 #include "handleMessages.hpp"
 #include "logging.hpp"
 #include "openConnection.hpp"
+#include "readMessages.hpp"
 #include "ssl.hpp"
 #include "types.hpp"
 
-void printUsage(void)
+static void printUsage(void)
 {
     std::cout << "Usage: " << std::endl;
     std::cout << "./Client <ip> <port>" << std::endl;
-}
-
-void readMessages(SSL *ssl)
-{
-
-    while (1)
-    {
-        char buffer[1024] = {0};
-        int  numRead      = SSL_read(ssl, buffer, sizeof(buffer));
-        if (numRead < 0)
-        {
-            LOG_INFO("Server closed connection!");
-            break;
-        }
-        LOG_INFO(fmt::format("Read [{}]", buffer));
-    }
-    LOG_INFO("Tearing down!");
 }
 
 int main(int argc, char const *argv[])
