@@ -1,5 +1,6 @@
 // standard headers
 #include <arpa/inet.h>
+#include <csignal>
 #include <iostream>
 #include <map>
 #include <stdio.h>
@@ -23,13 +24,21 @@
 #include "resetFd.hpp"
 #include "ssl.hpp"
 
+int serverSocket = 0;
+
+void signalHandler(int signal)
+{
+    LOG_INFO("Handling signal, closing socket...");
+    close(serverSocket);
+    exit(1);
+}
+
 int processClients(std::string    certPath,
                    std::string    keyPath,
                    unsigned short port)
 {
     std::map<int, Client *> clients;
-    int                     serverSocket = 0;
-    SSL_CTX                *ctx          = NULL;
+    SSL_CTX                *ctx = NULL;
     struct sockaddr_in      address;
     int                     addrlen    = 0;
     int                     new_socket = 0;
@@ -41,11 +50,12 @@ int processClients(std::string    certPath,
     char                    buffer[1025] = {0};   // data buffer of 1K
     fd_set                  readfds;
     std::thread             cliThread;
+    std::signal(SIGINT, signalHandler);
 
     serverSocket = SslLib_createSocket(port);
     ctx          = SslLib_getContext();
     SslLib_configureContext(ctx, certPath.c_str(), keyPath.c_str());
-    cliThread = std::thread(processCliThread, serverSocket);
+    cliThread = std::thread(processCliThread);
 
     if (initServer(serverSocket, max_clients, client_socket, address, port,
                    addrlen) < 0)

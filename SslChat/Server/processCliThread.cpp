@@ -1,10 +1,12 @@
 // standard headers
+#include <csignal>
 #include <iostream>
 #include <string>
 #include <unistd.h>
 
 // installed headers
 #include <fmt/core.h>
+#include <openssl/ssl.h>
 
 // project heaers
 #include "logging.hpp"
@@ -13,9 +15,8 @@
 /**
  * @brief handle the CLI
  *
- * @param sock the master socket. Closed when 'quit' is entered at the CLI.
  */
-void processCliThread(int serverSocket)
+void processCliThread()
 {
     LOG_PROMPT();
     for (std::string line; std::getline(std::cin, line);)
@@ -24,7 +25,7 @@ void processCliThread(int serverSocket)
         if (line.compare("quit") == 0)
         {
             LOG_INFO("Quitting.");
-            close(serverSocket);
+            std::raise(SIGINT);
             return;
         }
         LOG_PROMPT();

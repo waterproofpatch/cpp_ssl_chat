@@ -11,7 +11,7 @@ void readMessages(SSL *ssl)
     {
         char buffer[1024] = {0};
         int  numRead      = SSL_read(ssl, buffer, sizeof(buffer));
-        if (numRead < 0)
+        if (numRead <= 0)
         {
             LOG_INFO("Server closed connection!");
             break;
