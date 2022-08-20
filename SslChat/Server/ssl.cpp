@@ -70,7 +70,8 @@ void SslLib_configureContext(SSL_CTX    *ctx,
                              const char *certPath,
                              const char *keyPath)
 {
-    SSL_CTX_set_default_passwd_cb_userdata(ctx, (void *)"test");
+    SSL_CTX_set_default_passwd_cb_userdata(
+        ctx, (void *)"password");   // TODO bring this in from the environment
     SSL_CTX_set_default_passwd_cb(ctx, SslLib_setPasswordCallback);
     LOG_INFO("OK!");
 
