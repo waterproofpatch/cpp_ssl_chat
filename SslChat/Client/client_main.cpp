@@ -70,7 +70,12 @@ int main(int argc, char const *argv[])
     }
 
     LOG_INFO("Closing socket...");
+
+    // send a canary to cause the thread to close
+    SSL_write(ssl, "aaaaa", 1);
+
     close(sfd);
+
     LOG_INFO("Waiting for readMessageThread to join...");
     readMessageThread.join();
     LOG_INFO("readMessageThread joined.");
