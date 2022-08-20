@@ -69,6 +69,7 @@ int main(int argc, char const *argv[])
         LOG_ERROR("handleMessages returned an error!");
     }
 
+    LOG_INFO("Closing socket...");
     close(sfd);
     LOG_INFO("Waiting for readMessageThread to join...");
     readMessageThread.join();

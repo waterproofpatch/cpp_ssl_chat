@@ -21,6 +21,7 @@ int SslLib_createSocket(int port)
 {
     int                s;
     struct sockaddr_in addr;
+    int                reuse = 1;
 
     addr.sin_family      = AF_INET;
     addr.sin_port        = htons(port);
@@ -32,6 +33,8 @@ int SslLib_createSocket(int port)
         LOG_ERROR("Unable to create socket");
         exit(EXIT_FAILURE);
     }
+    setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (const char *)&reuse,
+               sizeof(reuse));
 
     if (bind(s, (struct sockaddr *)&addr, sizeof(addr)) < 0)
     {
@@ -73,7 +76,6 @@ void SslLib_configureContext(SSL_CTX    *ctx,
     SSL_CTX_set_default_passwd_cb_userdata(
         ctx, (void *)"password");   // TODO bring this in from the environment
     SSL_CTX_set_default_passwd_cb(ctx, SslLib_setPasswordCallback);
-    LOG_INFO("OK!");
 
     /* Set the key and cert */
     LOG_INFO(fmt::format("Loading {}!", certPath));
