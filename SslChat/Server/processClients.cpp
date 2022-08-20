@@ -28,8 +28,8 @@ int processClients(std::string    certPath,
                    unsigned short port)
 {
     std::map<int, Client *> clients;
-    int                     master_socket = 0;
-    SSL_CTX                *ctx           = NULL;
+    int                     serverSocket = 0;
+    SSL_CTX                *ctx          = NULL;
     struct sockaddr_in      address;
     int                     addrlen    = 0;
     int                     new_socket = 0;
@@ -42,14 +42,13 @@ int processClients(std::string    certPath,
     fd_set                  readfds;
     std::thread             cliThread;
 
-    master_socket = SslLib_createSocket(port);
-    ctx           = SslLib_getContext();
+    serverSocket = SslLib_createSocket(port);
+    ctx          = SslLib_getContext();
     SslLib_configureContext(ctx, certPath.c_str(), keyPath.c_str());
-    cliThread = std::thread(processCliThread, master_socket);
+    cliThread = std::thread(processCliThread, serverSocket);
 
-    if (initServer(
-            master_socket, max_clients, client_socket, address, port, addrlen) <
-        0)
+    if (initServer(serverSocket, max_clients, client_socket, address, port,
+                   addrlen) < 0)
     {
         LOG_ERROR("Failed initing server!");
         return -1;
@@ -58,8 +57,7 @@ int processClients(std::string    certPath,
     LOG_INFO("Waiting for connections ...");
     while (1)
     {
-        int max_sd =
-            resetFd(master_socket, readfds, max_clients, client_socket);
+        int max_sd = resetFd(serverSocket, readfds, max_clients, client_socket);
 
         // wait for an activity on one of the sockets , timeout is NULL ,
         // so wait indefinitely
@@ -73,15 +71,10 @@ int processClients(std::string    certPath,
 
         // If something happened on the master socket ,
         // then its an incoming connection
-        if (FD_ISSET(master_socket, &readfds))
+        if (FD_ISSET(serverSocket, &readfds))
         {
-            handleNewConnection(master_socket,
-                                address,
-                                addrlen,
-                                ctx,
-                                clients,
-                                max_clients,
-                                client_socket);
+            handleNewConnection(serverSocket, address, addrlen, ctx, clients,
+                                max_clients, client_socket);
         }
 
         // else its some IO operation on some other socket
@@ -98,13 +91,11 @@ int processClients(std::string    certPath,
                          SSL_read(clients.at(sd)->getSsl(), buffer, 1024)) == 0)
                 {
                     // Somebody disconnected , get his details and print
-                    getpeername(
-                        sd, (struct sockaddr *)&address, (socklen_t *)&addrlen);
-                    LOG_INFO(
-                        fmt::format("Client {} disconnected, ip {} , port {}",
-                                    sd,
-                                    inet_ntoa(address.sin_addr),
-                                    ntohs(address.sin_port)));
+                    getpeername(sd, (struct sockaddr *)&address,
+                                (socklen_t *)&addrlen);
+                    LOG_INFO(fmt::format(
+                        "Client {} disconnected, ip {} , port {}", sd,
+                        inet_ntoa(address.sin_addr), ntohs(address.sin_port)));
 
                     // Close the socket and mark as 0 in list for reuse
                     close(sd);
