@@ -6,6 +6,7 @@ find_package(fmt)
 target_link_libraries(Client)
 target_link_libraries(Client fmt::fmt)
 target_link_libraries(Client Logging)
+target_link_libraries(Client Logging pthread)
 
 target_include_directories(Client PUBLIC
                            "${PROJECT_BINARY_DIR}"

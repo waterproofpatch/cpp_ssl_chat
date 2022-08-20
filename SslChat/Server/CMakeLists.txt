@@ -5,6 +5,7 @@ find_package(fmt)
 
 target_link_libraries(Server fmt::fmt)
 target_link_libraries(Server Logging)
+target_link_libraries(Server Logging pthread)
 
 target_include_directories(Server PUBLIC "${PROJECT_BINARY_DIR}" "${PROJECT_SOURCE_DIR}/Logging")
 
