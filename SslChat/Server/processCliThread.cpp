@@ -1,5 +1,4 @@
 // standard headers
-#include <csignal>
 #include <iostream>
 #include <string>
 #include <unistd.h>
@@ -25,7 +24,6 @@ void processCliThread()
         if (line.compare("quit") == 0)
         {
             LOG_INFO("Quitting.");
-            std::raise(SIGINT);
             return;
         }
         LOG_PROMPT();
