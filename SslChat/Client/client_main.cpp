@@ -10,11 +10,11 @@
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 
+#include "cliLoop.hpp"
 #include "constants.hpp"
 #include "handleMessages.hpp"
 #include "logging.hpp"
 #include "openConnection.hpp"
-#include "readMessages.hpp"
 #include "ssl.hpp"
 #include "types.hpp"
 
@@ -63,7 +63,7 @@ int main(int argc, char const *argv[])
     LOG_INFO(fmt::format("Connected with {} encryption", SSL_get_cipher(ssl)));
     SslLib_displayCerts(ssl);
 
-    auto readMessageThread = std::thread(readMessages, ssl);
+    auto cliThread = std::thread(cliLoop, ssl);
     if (handleMessages(ssl) < 0)
     {
         LOG_ERROR("handleMessages returned an error!");
@@ -76,9 +76,9 @@ int main(int argc, char const *argv[])
 
     close(sfd);
 
-    LOG_INFO("Waiting for readMessageThread to join...");
-    readMessageThread.join();
-    LOG_INFO("readMessageThread joined.");
+    LOG_INFO("Waiting for cliThread to join...");
+    cliThread.join();
+    LOG_INFO("cliThread joined.");
     SSL_free(ssl);
     SSL_CTX_free(ctx);
     return 0;
