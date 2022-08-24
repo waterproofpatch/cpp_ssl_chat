@@ -12,7 +12,6 @@
 
 #include "cliLoop.hpp"
 #include "constants.hpp"
-#include "handleMessages.hpp"
 #include "logging.hpp"
 #include "openConnection.hpp"
 #include "ssl.hpp"
@@ -22,6 +21,17 @@ static void printUsage(void)
 {
     std::cout << "Usage: " << std::endl;
     std::cout << "./Client <ip> <port>" << std::endl;
+}
+
+static void cliLoopMessageHandler(std::string message, void *args)
+{
+    SSL *ssl = (SSL *)args;
+    LOG_INFO(fmt::format("Sending [{}]", message));
+    int numWritten = SSL_write(ssl, message.c_str(), message.length());
+    if (numWritten < 0)
+    {
+        LOG_ERROR("Failed writing to socket!");
+    }
 }
 
 int main(int argc, char const *argv[])
@@ -63,22 +73,14 @@ int main(int argc, char const *argv[])
     LOG_INFO(fmt::format("Connected with {} encryption", SSL_get_cipher(ssl)));
     SslLib_displayCerts(ssl);
 
-    auto cliThread = std::thread(cliLoop, ssl);
-    if (handleMessages(ssl) < 0)
-    {
-        LOG_ERROR("handleMessages returned an error!");
-    }
-
-    LOG_INFO("Closing socket...");
-
-    // send a canary to cause the thread to close
-    SSL_write(ssl, "aaaaa", 1);
-
-    close(sfd);
+    std::thread cliThread(cliLoop, cliLoopMessageHandler, (void *)ssl);
 
     LOG_INFO("Waiting for cliThread to join...");
     cliThread.join();
     LOG_INFO("cliThread joined.");
+
+    LOG_INFO("Closing socket...");
+    close(sfd);
     SSL_free(ssl);
     SSL_CTX_free(ctx);
     return 0;

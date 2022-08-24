@@ -33,8 +33,8 @@ int SslLib_createSocket(int port)
         LOG_ERROR("Unable to create socket");
         exit(EXIT_FAILURE);
     }
-    setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (const char *)&reuse,
-               sizeof(reuse));
+    setsockopt(
+        s, SOL_SOCKET, SO_REUSEADDR, (const char *)&reuse, sizeof(reuse));
 
     if (bind(s, (struct sockaddr *)&addr, sizeof(addr)) < 0)
     {
@@ -74,7 +74,7 @@ void SslLib_configureContext(SSL_CTX    *ctx,
                              const char *keyPath)
 {
     SSL_CTX_set_default_passwd_cb_userdata(
-        ctx, (void *)"password");   // TODO bring this in from the environment
+        ctx, (void *)"test");   // TODO bring this in from the environment
     SSL_CTX_set_default_passwd_cb(ctx, SslLib_setPasswordCallback);
 
     /* Set the key and cert */

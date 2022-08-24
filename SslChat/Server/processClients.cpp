@@ -1,7 +1,9 @@
 // standard headers
 #include <arpa/inet.h>
+#include <fcntl.h>
 #include <iostream>
 #include <map>
+#include <signal.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
@@ -15,15 +17,48 @@
 #include <openssl/ssl.h>
 
 // project headers
+#include "cliLoop.hpp"
 #include "client.hpp"
 #include "handleNewConnection.hpp"
 #include "initServer.hpp"
 #include "logging.hpp"
-#include "processCliThread.hpp"
 #include "resetFd.hpp"
 #include "ssl.hpp"
 
 int serverSocket = 0;
+
+static int pfd[2]; /* File descriptors for pipe */
+
+static int max(int a, int b)
+{
+    return a > b ? a : b;
+}
+
+static void selfPipe()
+{
+    if (write(pfd[1], "x", 1) == -1 && errno != EAGAIN)
+    {
+        LOG_ERROR("Failed writing to pipe");
+        return;
+    }
+}
+
+static void handler(int sig)
+{
+    int savedErrno; /* In case we change 'errno' */
+    selfPipe();
+    savedErrno = errno;
+    errno      = savedErrno;
+}
+
+static void cliLoopMessageHandler(std::string message, void *args)
+{
+    LOG_DEBUG(fmt::format("Handling message {}", message));
+    if (message.compare("quit") == 0)
+    {
+        selfPipe();
+    }
+}
 
 int processClients(std::string    certPath,
                    std::string    keyPath,
@@ -41,12 +76,12 @@ int processClients(std::string    certPath,
     int                     valread      = 0;
     char                    buffer[1025] = {0};   // data buffer of 1K
     fd_set                  readfds;
-    std::thread             cliThread;
+    struct sigaction        sa;
 
     serverSocket = SslLib_createSocket(port);
     ctx          = SslLib_getContext();
     SslLib_configureContext(ctx, certPath.c_str(), keyPath.c_str());
-    cliThread = std::thread(processCliThread);
+    std::thread cliThread(cliLoop, cliLoopMessageHandler, nullptr);
 
     if (initServer(
             serverSocket, max_clients, client_socket, address, port, addrlen) <
@@ -56,19 +91,100 @@ int processClients(std::string    certPath,
         return -1;
     }
 
+    /* Create pipe before establishing signal handler to prevent race */
+
+    if (pipe(pfd) == -1)
+    {
+        LOG_ERROR("Failed creating pipe!");
+        return -1;
+    }
+
     LOG_INFO("Waiting for connections ...");
     while (1)
     {
         int max_sd = resetFd(serverSocket, readfds, max_clients, client_socket);
 
+        FD_SET(pfd[0], &readfds); /* Add read end of pipe to 'readfds' */
+        max_sd =
+            max(max_sd + 1, pfd[0] + 1); /* And adjust 'max_sd' if required */
+
+        /* Make read and write ends of pipe nonblocking */
+
+        int flags = fcntl(pfd[0], F_GETFL);
+        if (flags == -1)
+        {
+            LOG_ERROR("fcntl-F_GETFL");
+            return -1;
+        }
+        flags |= O_NONBLOCK; /* Make read end nonblocking */
+        if (fcntl(pfd[0], F_SETFL, flags) == -1)
+        {
+            LOG_ERROR("fcntl-F_GETFL");
+            return -1;
+        }
+
+        flags = fcntl(pfd[1], F_GETFL);
+        if (flags == -1)
+        {
+            LOG_ERROR("fcntl-F_GETFL");
+            return -1;
+        }
+        flags |= O_NONBLOCK; /* Make write end nonblocking */
+        if (fcntl(pfd[1], F_SETFL, flags) == -1)
+        {
+            LOG_ERROR("fcntl-F_SETFL");
+            return -1;
+        }
+
+        sigemptyset(&sa.sa_mask);
+        sa.sa_flags   = SA_RESTART; /* Restart interrupted reads()s */
+        sa.sa_handler = handler;
+        if (sigaction(SIGINT, &sa, NULL) == -1)
+        {
+            LOG_ERROR("sigaction");
+            return -1;
+        }
+
         // wait for an activity on one of the sockets , timeout is NULL ,
         // so wait indefinitely
-        activity = select(max_sd + 1, &readfds, NULL, NULL, NULL);
+        int activity = 0;
+        while ((activity = select(max_sd, &readfds, NULL, NULL, 0)) == -1 &&
+               errno == EINTR)
+            continue;       /* Restart if interrupted by signal */
+        if (activity == -1) /* Unexpected error */
+        {
+            LOG_ERROR("Error on select!");
+            return -1;
+        }
+        if (FD_ISSET(pfd[0], &readfds))
+        {
+            /* Handler was called */
+            LOG_INFO("A signal was caught!");
+
+            for (;;)
+            {
+                /* Consume bytes from pipe */
+                int ch;
+                if (read(pfd[0], &ch, 1) == -1)
+                {
+                    if (errno == EAGAIN)
+                        break; /* No more bytes */
+                    else
+                        LOG_ERROR("read"); /* Some other error */
+                }
+
+                /* Perform any actions that should be taken in response to
+                 * signal */
+                LOG_INFO("Exiting!");
+                goto fail;
+            }
+        }
+        // activity = select(max_sd + 1, &readfds, NULL, NULL, NULL);
 
         if ((activity < 0) && (errno != EINTR))
         {
             LOG_INFO("select error");
-            return -1;
+            goto fail;
         }
 
         // If something happened on the master socket ,
@@ -124,5 +240,11 @@ int processClients(std::string    certPath,
             }
         }
     }
+
+fail:
+done:
+    LOG_DEBUG("Joining cliThread...");
+    cliThread.join();
+    LOG_DEBUG("Joined thread.");
     return 0;
 }

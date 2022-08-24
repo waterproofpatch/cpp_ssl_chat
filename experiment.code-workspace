@@ -10,7 +10,10 @@
 			"complex": "cpp",
 			"*.tcc": "cpp",
 			"string": "cpp",
-			"string_view": "cpp"
+			"string_view": "cpp",
+			"chrono": "cpp",
+			"random": "cpp",
+			"limits": "cpp"
 		}
 	}
 }
