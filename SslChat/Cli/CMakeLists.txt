@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
 
-# project(SslChat)
-
 find_package(fmt)
 
 add_library(Cli STATIC cliLoop.cpp)

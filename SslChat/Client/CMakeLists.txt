@@ -1,11 +1,12 @@
-add_executable(Client client_main.cpp ssl.cpp openConnection.cpp run.cpp)
+add_executable(Client client_main.cpp openConnection.cpp run.cpp)
 
 # https://hackingcpp.com/cpp/libs/fmt.html
 find_package(fmt)
 
-target_link_libraries(Client fmt::fmt Logging pthread Cli)
+target_link_libraries(Client Ssl fmt::fmt Logging pthread Cli)
 include_directories(Client PUBLIC
                            "${PROJECT_BINARY_DIR}"
+                           "${PROJECT_SOURCE_DIR}/Ssl"
                            "${PROJECT_SOURCE_DIR}/Logging"
                            "${PROJECT_SOURCE_DIR}/Cli"
                            )
