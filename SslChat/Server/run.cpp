@@ -77,7 +77,7 @@ int run(std::string certPath, std::string keyPath, unsigned short port)
     struct sigaction        sa;
 
     serverSocket = SslLib_createSocket(port);
-    ctx          = SslLib_getContext();
+    ctx          = SslLib_getServerContext();
     SslLib_configureContext(ctx, certPath.c_str(), keyPath.c_str());
     std::thread cliThread(cliLoop, cliLoopMessageHandler, nullptr);
 

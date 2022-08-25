@@ -1,4 +1,3 @@
-
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -6,9 +5,21 @@
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 
-#include <fmt/core.h>
+#include <fmt/core.h>   // fmt::format
 
 #include "logging.hpp"
+
+static SSL_CTX *getNewCtx(const SSL_METHOD &method)
+{
+    SSL_CTX *ctx = SSL_CTX_new(&method);
+
+    if (!ctx)
+    {
+        LOG_ERROR("Unable to create SSL context");
+    }
+
+    return ctx;
+}
 
 static int SslLib_setPasswordCallback(char *buf, int size, int rwflag, void *u)
 {
@@ -51,22 +62,26 @@ int SslLib_createSocket(int port)
     return s;
 }
 
-SSL_CTX *SslLib_getContext()
+/**
+ * @brief initialize an SSL context for a server.
+ *
+ * @return SSL_CTX* a new SSL context.
+ */
+SSL_CTX *SslLib_getServerContext()
 {
-    const SSL_METHOD *method;
-    SSL_CTX          *ctx;
+    const SSL_METHOD *method = TLS_server_method();
+    return getNewCtx(*method);
+}
 
-    method = TLS_server_method();
-
-    ctx = SSL_CTX_new(method);
-    if (!ctx)
-    {
-        LOG_ERROR("Unable to create SSL context");
-        ERR_print_errors_fp(stderr);
-        exit(EXIT_FAILURE);
-    }
-
-    return ctx;
+/**
+ * @brief initialize an SSL context for a client.
+ *
+ * @return SSL_CTX* a new SSL context.
+ */
+SSL_CTX *SslLib_getClientContext(void)
+{
+    const SSL_METHOD *method = TLS_client_method();
+    return getNewCtx(*method);
 }
 
 void SslLib_configureContext(SSL_CTX    *ctx,
@@ -93,25 +108,6 @@ void SslLib_configureContext(SSL_CTX    *ctx,
         exit(EXIT_FAILURE);
     }
     LOG_INFO("Leaving function");
-}
-
-/**
- * @brief initialize an SSL context.
- *
- * @return SSL_CTX* a new SSL context.
- */
-SSL_CTX *SslLib_initCtx(void)
-{
-    const SSL_METHOD *method =
-        TLS_client_method(); /* Create new client-method instance */
-    SSL_CTX *ctx = SSL_CTX_new(method);
-
-    if (ctx == nullptr)
-    {
-        ERR_print_errors_fp(stderr);
-        exit(EXIT_FAILURE);
-    }
-    return ctx;
 }
 
 /**
