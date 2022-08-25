@@ -60,9 +60,7 @@ static void cliLoopMessageHandler(std::string message, void *args)
     }
 }
 
-int processClients(std::string    certPath,
-                   std::string    keyPath,
-                   unsigned short port)
+int run(std::string certPath, std::string keyPath, unsigned short port)
 {
     std::map<int, Client *> clients;
     SSL_CTX                *ctx = NULL;

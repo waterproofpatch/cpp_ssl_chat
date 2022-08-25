@@ -18,7 +18,7 @@
 #include "client.hpp"
 #include "initServer.hpp"
 #include "logging.hpp"
-#include "processClients.hpp"
+#include "run.hpp"
 #include "safe_queue.hpp"
 #include "ssl.hpp"
 
@@ -40,5 +40,5 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    return processClients(argv[1], argv[2], 5000);
+    return run(argv[1], argv[2], 5000);
 }
