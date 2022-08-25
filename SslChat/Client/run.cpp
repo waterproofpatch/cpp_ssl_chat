@@ -32,8 +32,8 @@ void run(std::string ip, std::string port)
 {
     LOG_INFO(fmt::format("Connecting to {}:{}", ip, port));
 
-    SSL_CTX *ctx = SslLib_getClientContext();
-    SSL     *ssl = SSL_new(ctx);
+    SslChat_Ctx *ctx = SslLib_getClientContext();
+    SSL         *ssl = SSL_new(ctx);
     if (ssl == nullptr)
     {
         LOG_ERROR("SSL_new() failed");

@@ -63,7 +63,7 @@ static void cliLoopMessageHandler(std::string message, void *args)
 int run(std::string certPath, std::string keyPath, unsigned short port)
 {
     std::map<int, Client *> clients;
-    SSL_CTX                *ctx = NULL;
+    SslChat_Ctx            *ctx = NULL;
     struct sockaddr_in      address;
     int                     addrlen    = 0;
     int                     new_socket = 0;

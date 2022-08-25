@@ -8,6 +8,7 @@
 #include <fmt/core.h>   // fmt::format
 
 #include "logging.hpp"
+#include "types.hpp"
 
 static SSL_CTX *getNewCtx(const SSL_METHOD &method)
 {
@@ -67,7 +68,7 @@ int SslLib_createSocket(int port)
  *
  * @return SSL_CTX* a new SSL context.
  */
-SSL_CTX *SslLib_getServerContext()
+SslChat_Ctx *SslLib_getServerContext()
 {
     const SSL_METHOD *method = TLS_server_method();
     return getNewCtx(*method);
@@ -78,15 +79,15 @@ SSL_CTX *SslLib_getServerContext()
  *
  * @return SSL_CTX* a new SSL context.
  */
-SSL_CTX *SslLib_getClientContext(void)
+SslChat_Ctx *SslLib_getClientContext(void)
 {
     const SSL_METHOD *method = TLS_client_method();
     return getNewCtx(*method);
 }
 
-void SslLib_configureContext(SSL_CTX    *ctx,
-                             const char *certPath,
-                             const char *keyPath)
+void SslLib_configureContext(SslChat_Ctx *ctx,
+                             const char  *certPath,
+                             const char  *keyPath)
 {
     SSL_CTX_set_default_passwd_cb_userdata(
         ctx, (void *)"test");   // TODO bring this in from the environment
