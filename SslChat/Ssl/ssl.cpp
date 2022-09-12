@@ -8,6 +8,7 @@
 #include <fmt/core.h>   // fmt::format
 
 #include "logging.hpp"
+#include "ssl.hpp"
 #include "types.hpp"
 
 static SSL_CTX *getNewCtx(const SSL_METHOD &method)
@@ -27,6 +28,33 @@ static int SslLib_setPasswordCallback(char *buf, int size, int rwflag, void *u)
     strncpy(buf, (char *)u, size);
     buf[size - 1] = '\0';
     return strlen(buf);
+}
+
+/**
+ * @brief allocate a new SSL handle for listening, reading and writing.
+ *
+ * @param certPath path on disk to the certificate file.
+ * @param keyPath path on disk to the key file.
+ * @return tSslChat_SslHandle*
+ */
+tSslChat_SslHandle *SslLib_getServerHandle(std::string certPath,
+                                           std::string keyPath)
+{
+    SslChat_Ctx *ctx = SslLib_getServerContext();
+    SslLib_configureContext(ctx, certPath.c_str(), keyPath.c_str());
+    SSL                *ssl    = SSL_new(ctx);
+    tSslChat_SslHandle *handle = new tSslChat_SslHandle(ctx, ssl);
+    return handle;
+}
+
+int SslLib_read(tSslChat_SslHandle &handle, unsigned char *buf, size_t length)
+{
+    return SSL_read(handle.ssl, buf, length);
+}
+
+int SslLib_write(tSslChat_SslHandle &handle, unsigned char *buf, size_t length)
+{
+    return SSL_write(handle.ssl, buf, length);
 }
 
 int SslLib_createSocket(int port)
