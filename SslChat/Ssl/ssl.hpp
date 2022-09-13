@@ -16,5 +16,6 @@ tSslChat_SslHandle *SslLib_getServerHandle(std::string certPath,
 int SslLib_read(tSslChat_SslHandle &handle, unsigned char *buf, size_t length);
 int SslLib_write(tSslChat_SslHandle &handle, unsigned char *buf, size_t length);
 SslChat_Ssl *SslLib_new(SslChat_Ctx &ctx);
+void         SslLib_setFd(SslChat_Ssl &ssl, int socket);
 
 #endif

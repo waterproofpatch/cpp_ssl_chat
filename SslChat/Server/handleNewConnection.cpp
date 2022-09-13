@@ -38,9 +38,8 @@ int handleNewConnection(int                      master_socket,
         return -1;
     }
 
-    // SSL *ssl = SSL_new(ctx);
     SslChat_Ssl *ssl = SslLib_new(ctx);
-    SSL_set_fd(ssl, new_socket);
+    SslLib_setFd(*ssl, new_socket);
     clients.insert(
         std::pair<int, Client *>(new_socket, new Client(ssl, new_socket)));
 

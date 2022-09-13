@@ -62,6 +62,12 @@ SslChat_Ssl *SslLib_new(SslChat_Ctx &ctx)
     return SSL_new(&ctx);
 }
 
+void SslLib_setFd(SslChat_Ssl &ssl, int socket)
+{
+
+    SSL_set_fd(&ssl, socket);
+}
+
 int SslLib_createSocket(int port)
 {
     int                s;
