@@ -15,7 +15,7 @@
 int handleNewConnection(int                      master_socket,
                         sockaddr_in             &address,
                         int                     &addrlen,
-                        SSL_CTX                 *ctx,
+                        SSL_CTX                 &ctx,
                         std::map<int, Client *> &clients,
                         int                      max_clients,
                         int                      client_socket[]);

@@ -4,6 +4,7 @@
 #include <openssl/ssl.h>
 
 typedef SSL_CTX SslChat_Ctx;
+typedef SSL     SslChat_Ssl;
 
 typedef struct SslChat_SslHandle
 {

@@ -57,6 +57,11 @@ int SslLib_write(tSslChat_SslHandle &handle, unsigned char *buf, size_t length)
     return SSL_write(handle.ssl, buf, length);
 }
 
+SslChat_Ssl *SslLib_new(SslChat_Ctx &ctx)
+{
+    return SSL_new(&ctx);
+}
+
 int SslLib_createSocket(int port)
 {
     int                s;

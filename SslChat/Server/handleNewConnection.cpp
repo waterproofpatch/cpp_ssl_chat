@@ -17,11 +17,12 @@
 #include "handleNewConnection.hpp"
 #include "logging.hpp"
 #include "ssl.hpp"
+#include "types.hpp"
 
 int handleNewConnection(int                      master_socket,
                         sockaddr_in             &address,
                         int                     &addrlen,
-                        SslChat_Ctx             *ctx,
+                        SslChat_Ctx             &ctx,
                         std::map<int, Client *> &clients,
                         int                      max_clients,
                         int                      client_socket[])
@@ -37,7 +38,8 @@ int handleNewConnection(int                      master_socket,
         return -1;
     }
 
-    SSL *ssl = SSL_new(ctx);
+    // SSL *ssl = SSL_new(ctx);
+    SslChat_Ssl *ssl = SslLib_new(ctx);
     SSL_set_fd(ssl, new_socket);
     clients.insert(
         std::pair<int, Client *>(new_socket, new Client(ssl, new_socket)));

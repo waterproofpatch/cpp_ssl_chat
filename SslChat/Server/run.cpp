@@ -24,6 +24,7 @@
 #include "logging.hpp"
 #include "resetFd.hpp"
 #include "ssl.hpp"
+#include "types.hpp"
 
 int serverSocket = 0;
 
@@ -63,7 +64,7 @@ static void cliLoopMessageHandler(std::string message, void *args)
 int run(std::string certPath, std::string keyPath, unsigned short port)
 {
     std::map<int, Client *> clients;
-    SslChat_Ctx            *ctx = NULL;
+    SslChat_Ctx            *ctx = nullptr;
     struct sockaddr_in      address;
     int                     addrlen    = 0;
     int                     new_socket = 0;
@@ -192,7 +193,7 @@ int run(std::string certPath, std::string keyPath, unsigned short port)
             handleNewConnection(serverSocket,
                                 address,
                                 addrlen,
-                                ctx,
+                                *ctx,
                                 clients,
                                 max_clients,
                                 client_socket);
