@@ -52,7 +52,7 @@ int SslLib_read(tSslChat_SslHandle &handle, unsigned char *buf, size_t length)
     return SSL_read(handle.ssl, buf, length);
 }
 
-int SslLib_write(tSslChat_SslHandle &handle, unsigned char *buf, size_t length)
+int SslLib_write(tSslChat_SslHandle &handle, const char *buf, size_t length)
 {
     return SSL_write(handle.ssl, buf, length);
 }
@@ -71,11 +71,6 @@ void SslLib_setFd(SslChat_Ssl &ssl, int socket)
 int SslLib_accept(SslChat_Ssl &ssl)
 {
     return SSL_accept(&ssl);
-}
-
-int SslLib_write(SslChat_Ssl &ssl, const char *payload, size_t length)
-{
-    return SSL_write(&ssl, payload, length);
 }
 
 int SslLib_createSocket(int port)

@@ -212,7 +212,7 @@ int run(std::string certPath, std::string keyPath, unsigned short port)
                 if ((valread =
                          SSL_read(clients.at(sd)->getSsl(), buffer, 1024)) == 0)
                 {
-                    // Somebody disconnected , get his details and print
+                    // Somebody disconnected, get his details and print
                     getpeername(
                         sd, (struct sockaddr *)&address, (socklen_t *)&addrlen);
                     LOG_INFO(

@@ -36,7 +36,8 @@ int handleNewConnection(int                      master_socket,
         return -1;
     }
 
-    SslChat_Ssl *ssl = SslLib_new(ctx);
+    SslChat_Ssl        *ssl       = SslLib_new(ctx);
+    tSslChat_SslHandle *sslHandle = new tSslChat_SslHandle(&ctx, ssl);
     SslLib_setFd(*ssl, new_socket);
     clients.insert(
         std::pair<int, Client *>(new_socket, new Client(ssl, new_socket)));
@@ -50,8 +51,9 @@ int handleNewConnection(int                      master_socket,
     else
     {
         LOG_INFO("New client!");
-        if (SslLib_write(
-                *ssl, welcomeMessage.c_str(), welcomeMessage.length()) < 0)
+        if (SslLib_write(*sslHandle,
+                         welcomeMessage.c_str(),
+                         welcomeMessage.length()) < 0)
         {
             LOG_ERROR("Client failed sending!");
             return -1;
