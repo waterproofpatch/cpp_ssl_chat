@@ -68,6 +68,16 @@ void SslLib_setFd(SslChat_Ssl &ssl, int socket)
     SSL_set_fd(&ssl, socket);
 }
 
+int SslLib_accept(SslChat_Ssl &ssl)
+{
+    return SSL_accept(&ssl);
+}
+
+int SslLib_write(SslChat_Ssl &ssl, const char *payload, size_t length)
+{
+    return SSL_write(&ssl, payload, length);
+}
+
 int SslLib_createSocket(int port)
 {
     int                s;

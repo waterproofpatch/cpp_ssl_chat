@@ -9,8 +9,6 @@
 
 // installed headers
 #include <fmt/core.h>
-#include <openssl/err.h>
-#include <openssl/ssl.h>
 
 // project headers
 #include "client.hpp"
@@ -44,7 +42,7 @@ int handleNewConnection(int                      master_socket,
         std::pair<int, Client *>(new_socket, new Client(ssl, new_socket)));
 
     LOG_INFO("Accepting SSL...");
-    if (SSL_accept(ssl) <= 0)
+    if (SslLib_accept(*ssl) <= 0)
     {
         LOG_INFO("Problem!");
         return -1;
@@ -52,7 +50,8 @@ int handleNewConnection(int                      master_socket,
     else
     {
         LOG_INFO("New client!");
-        if (SSL_write(ssl, welcomeMessage.c_str(), welcomeMessage.length()) < 0)
+        if (SslLib_write(
+                *ssl, welcomeMessage.c_str(), welcomeMessage.length()) < 0)
         {
             LOG_ERROR("Client failed sending!");
             return -1;
