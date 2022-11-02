@@ -1,21 +1,15 @@
 # SslChat
 
+From dev container:
+
+```bash
+git clone http://github.com/fmtlib/fmt.git
+apt-get install libssl-dev
+```
+
 ```bash
 cd SslChat
 mkdir build
 cd build
-```
-
-## Build
-
-OSX
-
-```bash
-cmake -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DOPENSSL_LIBRARIES=/usr/local/opt/openssl/lib ..
-```
-
-Linux
-
-```bash
-cmake -DOPENSSL_ROOT_DIR=/usr/include/openssl -DOPENSSL_LIBRARIES=/usr/lib/ssl ..
+cmake ..
 ```
