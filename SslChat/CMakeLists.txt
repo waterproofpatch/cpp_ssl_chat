@@ -5,6 +5,9 @@ set(CMAKE_CXX_STANDARD 20)
 
 project(SslChat VERSION 1.0)
 
+# https://hackingcpp.com/cpp/libs/fmt.html
+add_subdirectory(fmt)
+
 add_subdirectory(Logging)
 add_subdirectory(Client)
 add_subdirectory(Server)

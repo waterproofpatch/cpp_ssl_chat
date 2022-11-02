@@ -1,8 +1,5 @@
 add_executable(Server server_main.cpp client.cpp initServer.cpp run.cpp handleNewConnection.cpp resetFd.cpp)
 
-# https://hackingcpp.com/cpp/libs/fmt.html
-find_package(fmt)
-
 target_link_libraries(Server Ssl fmt::fmt Logging pthread Cli)
 include_directories(Server PUBLIC 
                     "${PROJECT_BINARY_DIR}"
